@@ -2,3 +2,7 @@ Django==6.0.3
 django-cors-headers==4.9.0
 djangorestframework==3.17.1
 python-dotenv==1.2.2
+requests>=2.31.0
+ytmusicapi>=1.7.0
+yt-dlp>=2024.0.0
+youtube-search-python>=1.6.6
