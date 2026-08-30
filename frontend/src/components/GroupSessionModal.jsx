@@ -48,7 +48,7 @@ export default function GroupSessionModal() {
               <Radio size={18} />
             </div>
             <div>
-              <h3 className="text-base font-bold tracking-wide" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h3 className="text-base font-bold tracking-wide" style={{ fontFamily: "'gg sans', sans-serif" }}>
                 Listen Together
               </h3>
               <p className="text-[11px] text-white/50">Real-time synchronized group playback</p>

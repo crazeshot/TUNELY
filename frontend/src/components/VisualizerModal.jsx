@@ -134,7 +134,7 @@ export default function VisualizerModal() {
             <span className="text-[11px] font-semibold tracking-wider uppercase text-pink-400">
               Studio Visualizer & Lyrics
             </span>
-            <h2 className="text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <h2 className="text-xl font-bold" style={{ fontFamily: "'gg sans', sans-serif" }}>
               {currentTrack.genre || 'Master Audio'}
             </h2>
           </div>

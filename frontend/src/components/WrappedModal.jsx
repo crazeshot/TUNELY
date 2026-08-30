@@ -45,7 +45,7 @@ export default function WrappedModal() {
               <span className="text-[10px] uppercase tracking-widest font-extrabold text-pink-400">
                 Annual Retrospective
               </span>
-              <h2 className="text-xl font-black" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h2 className="text-xl font-black" style={{ fontFamily: "'gg sans', sans-serif" }}>
                 Your Tunely Wrapped 2026
               </h2>
             </div>
@@ -65,7 +65,7 @@ export default function WrappedModal() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
               <span className="text-xs text-white/50 block mb-1">Minutes Streamed</span>
-              <p className="text-2xl font-extrabold text-pink-300 font-mono">
+              <p className="text-2xl font-extrabold text-white font-mono">
                 {wrappedData.total_minutes_streamed?.toLocaleString() || '4,820'}
               </p>
               <span className="text-[10px] text-white/40">Top 5% of listeners</span>
@@ -84,7 +84,7 @@ export default function WrappedModal() {
 
             <div className="col-span-2 sm:col-span-1 p-4 rounded-2xl bg-white/5 border border-white/10">
               <span className="text-xs text-white/50 block mb-1">Sonic Archetype</span>
-              <p className="text-sm font-bold text-purple-300">
+              <p className="text-sm font-bold text-white">
                 {wrappedData.music_personality?.title || 'Atmospheric Voyager'}
               </p>
               <span className="text-[10px] text-white/40">Audiophile rating: S+</span>
@@ -92,12 +92,12 @@ export default function WrappedModal() {
           </div>
 
           {/* Personality Card */}
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-900/40 via-pink-900/30 to-black/40 border border-white/15">
-            <div className="flex items-center gap-2 text-xs uppercase font-bold text-pink-400 mb-1">
+          <div className="p-5 rounded-2xl bg-white/[0.04] border border-white/15">
+            <div className="flex items-center gap-2 text-xs uppercase font-bold text-white/80 mb-1">
               <Sparkles size={14} />
               <span>Music Personality</span>
             </div>
-            <h3 className="text-lg font-extrabold text-white mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <h3 className="text-lg font-extrabold text-white mb-2" style={{ fontFamily: "'gg sans', sans-serif" }}>
               {wrappedData.music_personality?.title}
             </h3>
             <p className="text-xs text-white/75 leading-relaxed font-light">

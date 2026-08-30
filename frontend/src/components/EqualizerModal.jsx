@@ -39,7 +39,7 @@ export default function EqualizerModal() {
               <Sliders size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold tracking-wide" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h2 className="text-lg font-bold tracking-wide" style={{ fontFamily: "'gg sans', sans-serif" }}>
                 10-Band Graphic Equalizer
               </h2>
               <p className="text-xs text-white/50">Audiophile Web Audio DSP tuning</p>

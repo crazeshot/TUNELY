@@ -59,7 +59,7 @@ export default function ArtistModal() {
                 </span>
                 <BadgeCheck size={16} className="text-white fill-white/20" />
               </div>
-              <h2 className="text-2xl sm:text-4xl font-extrabold" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h2 className="text-2xl sm:text-4xl font-extrabold" style={{ fontFamily: "'gg sans', sans-serif" }}>
                 {artistName}
               </h2>
               <div className="flex items-center gap-2 text-xs text-white/60 mt-1">

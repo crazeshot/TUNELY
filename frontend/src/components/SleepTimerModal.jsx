@@ -42,7 +42,7 @@ export default function SleepTimerModal() {
             <div className="w-8 h-8 rounded-xl bg-white text-black flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.3)]">
               <Moon size={16} />
             </div>
-            <h3 className="text-sm font-bold tracking-wide" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <h3 className="text-sm font-bold tracking-wide" style={{ fontFamily: "'gg sans', sans-serif" }}>
               Sleep Timer
             </h3>
           </div>

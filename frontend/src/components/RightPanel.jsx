@@ -52,7 +52,7 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
           </div>
 
           <div className="flex items-center gap-1.5 text-center">
-            <p className="text-white text-xs font-bold tracking-tight truncate max-w-[160px]" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <p className="text-white text-xs font-bold tracking-tight truncate max-w-[160px]" style={{ fontFamily: "'gg sans', sans-serif" }}>
               {user.display_name || user.username || 'Alex Morgan'}
             </p>
             <Sparkles size={12} className="text-white shrink-0" />
@@ -87,7 +87,7 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
             <ListMusic size={15} className="text-white" />
             <h3
               className="text-white font-bold text-xs tracking-tight"
-              style={{ fontFamily: 'Syne, sans-serif' }}
+              style={{ fontFamily: "'gg sans', sans-serif" }}
             >
               Next Queue
             </h3>

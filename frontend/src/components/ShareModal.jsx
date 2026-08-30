@@ -36,7 +36,7 @@ export default function ShareModal() {
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-white" />
-            <h3 className="text-sm font-bold tracking-wide" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <h3 className="text-sm font-bold tracking-wide" style={{ fontFamily: "'gg sans', sans-serif" }}>
               Share Track
             </h3>
           </div>

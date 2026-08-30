@@ -48,8 +48,8 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
               <Sparkles size={16} />
             </div>
             <h1
-              className="text-white font-bold tracking-tight text-2xl"
-              style={{ fontFamily: 'Syne, sans-serif', letterSpacing: '-0.5px' }}
+              className="text-white font-extrabold tracking-tight text-2xl"
+              style={{ fontFamily: "'gg sans', sans-serif", letterSpacing: '-0.5px' }}
             >
               Tunely
             </h1>

@@ -69,7 +69,7 @@ export default function AuthModal() {
               <Sparkles size={18} />
             </div>
             <div>
-              <h3 className="text-base font-bold tracking-wide" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h3 className="text-base font-bold tracking-wide" style={{ fontFamily: "'gg sans', sans-serif" }}>
                 {tab === 'login' ? 'Sign In to Tunely' : 'Create Tunely Account'}
               </h3>
               <p className="text-[11px] text-white/50">Personalized playlists, synced lyrics & soundstage</p>

@@ -5,7 +5,12 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ["'gg sans'", "'ggsans'", "'Plus Jakarta Sans'", "sans-serif"],
+        display: ["'gg sans'", "'ggsans'", "'Plus Jakarta Sans'", "sans-serif"],
+      },
+    },
   },
   plugins: [],
 }
