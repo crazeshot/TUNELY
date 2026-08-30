@@ -81,13 +81,16 @@ class YTMusicService:
         return True
 
     def _get_cover_url(self, item, video_id):
-        thumbnails = item.get('thumbnails', [])
-        if thumbnails:
-            url = thumbnails[-1].get('url', '')
+        thumbnails = item.get('thumbnails') or item.get('thumbnail') or []
+        if isinstance(thumbnails, list) and thumbnails:
+            last = thumbnails[-1]
+            url = last.get('url', '') if isinstance(last, dict) else str(last)
             if url.startswith('//'):
                 url = 'https:' + url
             if url:
                 return url
+        elif isinstance(thumbnails, str) and thumbnails:
+            return thumbnails
         if video_id:
             return f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
         return 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'
@@ -325,8 +328,7 @@ class YTMusicService:
                     t_title = item.get('title', 'Related Song')
                     artists = item.get('artists', [])
                     a_name = artists[0]['name'] if artists else (artist_name or 'Artist')
-                    thumbnails = item.get('thumbnails', [])
-                    cover_url = thumbnails[-1]['url'] if thumbnails else 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600'
+                    cover_url = self._get_cover_url(item, vid)
                     duration_str = item.get('length', '3:30')
                     duration_sec = self._parse_duration(duration_str)
 

@@ -5,8 +5,8 @@ export default function AudioCanvasVisualizer({
   mode = 'bars', // 'bars' | 'wave' | 'radial'
   height = 80,
   barCount = 32,
-  accentColor = '#e0529a',
-  secondaryColor = '#5227FF',
+  accentColor = '#ffffff',
+  secondaryColor = '#a1a1aa',
 }) {
   const { isPlaying, getFrequencyData } = usePlayer();
   const canvasRef = useRef(null);

@@ -8,7 +8,9 @@ export default {
     extend: {
       fontFamily: {
         sans: ["'gg sans'", "'ggsans'", "'Plus Jakarta Sans'", "sans-serif"],
+        accent: ["'gg sans'", "'ggsans'", "'Plus Jakarta Sans'", "sans-serif"],
         display: ["'gg sans'", "'ggsans'", "'Plus Jakarta Sans'", "sans-serif"],
+        gg: ["'gg sans'", "'ggsans'", "sans-serif"],
       },
     },
   },

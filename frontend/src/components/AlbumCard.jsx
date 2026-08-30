@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { Play, Pause, MoreVertical, Heart } from 'lucide-react';
 import { usePlayer } from '../context/usePlayer';
 import TrackContextMenu from './TrackContextMenu';
+import { getCoverUrl, handleCoverError } from '../utils/coverUrl';
 
 export default function AlbumCard({ track, delay = 0 }) {
   const { playTrack, togglePlay, currentTrack, isPlaying, likedTrackIds, toggleLike } = usePlayer();
   const [contextMenuPos, setContextMenuPos] = useState(null);
 
-  const isCurrent = currentTrack?.id === track.id;
+  const isCurrent = (currentTrack?.videoId && track?.videoId)
+    ? currentTrack.videoId === track.videoId
+    : (currentTrack?.id !== undefined && track?.id !== undefined && currentTrack.id === track.id);
   const isLiked = likedTrackIds.has(track.id);
 
   const handleCardClick = () => {
@@ -35,24 +38,20 @@ export default function AlbumCard({ track, delay = 0 }) {
         className="group relative cursor-pointer rounded-2xl overflow-hidden shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-white/[0.02] border border-white/10 hover:border-white/30"
         style={{
           aspectRatio: '3/4',
+          animationName: 'fadeUp',
+          animationDuration: '0.5s',
+          animationTimingFunction: 'ease-out',
+          animationFillMode: 'both',
           animationDelay: `${delay}ms`,
-          animation: 'fadeUp 0.5s ease-out both',
         }}
         onClick={handleCardClick}
       >
         {/* Album Cover */}
         <img
-          src={track.cover_url || track.cover || (track.videoId ? `https://i.ytimg.com/vi/${track.videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80')}
+          src={getCoverUrl(track)}
           alt={track.title}
-          referrerPolicy="no-referrer"
           loading="lazy"
-          onError={(e) => {
-            if (track.videoId && !e.currentTarget.src.includes('i.ytimg.com')) {
-              e.currentTarget.src = `https://i.ytimg.com/vi/${track.videoId}/hqdefault.jpg`;
-            } else {
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
-            }
-          }}
+          onError={(e) => handleCoverError(e, track)}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
 

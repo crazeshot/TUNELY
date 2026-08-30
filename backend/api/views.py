@@ -2,9 +2,9 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.http import HttpResponse, StreamingHttpResponse
-from django.shortcuts import redirect
-from django.utils import timezone
+import time
 import requests
+import urllib.parse
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action, api_view, permission_classes
@@ -546,3 +546,79 @@ def ytm_related_view(request):
         limit=limit
     )
     return Response({'tracks': tracks})
+
+
+_thumbnail_session = requests.Session()
+_adapter = requests.adapters.HTTPAdapter(pool_connections=25, pool_maxsize=100, max_retries=2)
+_thumbnail_session.mount('https://', _adapter)
+_thumbnail_session.mount('http://', _adapter)
+_thumbnail_cache = {}  # url -> (timestamp, content_type, bytes)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def ytm_thumbnail_view(request):
+    """
+    High-performance caching proxy for YouTube/Google Music album artwork.
+    Uses connection pooling and in-memory LRU byte caching for instant loading.
+    """
+    raw_url = request.query_params.get('url', '').strip()
+    if not raw_url:
+        return HttpResponse("Empty url", status=400)
+    if '%' in raw_url:
+        raw_url = urllib.parse.unquote(raw_url)
+
+    # 1. Fast in-memory cache hit (< 0.1ms)
+    now = time.time()
+    if raw_url in _thumbnail_cache:
+        ts, ctype, cbytes = _thumbnail_cache[raw_url]
+        if now - ts < 86400:  # 24-hour cache
+            resp = HttpResponse(cbytes, content_type=ctype, status=200)
+            resp['Access-Control-Allow-Origin'] = '*'
+            resp['Cache-Control'] = 'public, max-age=86400, immutable'
+            return resp
+
+    # 2. Security validation
+    allowed_domains = (
+        'ytimg.com',
+        'googleusercontent.com',
+        'ggpht.com',
+        'youtube.com',
+        'images.unsplash.com',
+    )
+    try:
+        parsed = urllib.parse.urlparse(raw_url)
+        netloc = parsed.netloc.lower().split(':')[0]
+        if not any(netloc == d or netloc.endswith('.' + d) for d in allowed_domains):
+            return HttpResponse('Forbidden domain', status=403)
+    except Exception:
+        return HttpResponse("Invalid url", status=400)
+
+    # 3. Fetch with connection pooling
+    try:
+        resp = _thumbnail_session.get(
+            raw_url,
+            timeout=5,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36',
+                'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+            },
+        )
+        if resp.status_code == 200:
+            content_type = resp.headers.get('Content-Type', 'image/jpeg')
+            content_bytes = resp.content
+
+            # LRU eviction
+            if len(_thumbnail_cache) > 1000:
+                oldest_k = min(_thumbnail_cache.keys(), key=lambda k: _thumbnail_cache[k][0])
+                del _thumbnail_cache[oldest_k]
+            _thumbnail_cache[raw_url] = (now, content_type, content_bytes)
+
+            response = HttpResponse(content_bytes, content_type=content_type, status=200)
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Cache-Control'] = 'public, max-age=86400, immutable'
+            return response
+        return HttpResponse(status=resp.status_code)
+    except Exception as e:
+        print(f'[ThumbnailProxy] Note: {e}')
+        return HttpResponse(status=502)

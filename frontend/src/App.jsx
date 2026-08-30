@@ -27,7 +27,8 @@ import AuthModal from './components/AuthModal';
 import GroupSessionModal from './components/GroupSessionModal';
 import WrappedModal from './components/WrappedModal';
 import PlaylistModal from './components/PlaylistModal';
-import UniversalReactPlayer from './components/UniversalReactPlayer';
+
+const LIQUID_COLORS = ['#27272a', '#71717a', '#ffffff'];
 
 function AppLayout() {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
@@ -47,7 +48,6 @@ function AppLayout() {
     setIsVisualizerOpen,
     setIsEqualizerOpen,
     setIsCommandPaletteOpen,
-    themeColors,
     enableShader,
   } = usePlayer();
 
@@ -128,41 +128,31 @@ function AppLayout() {
   ]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden select-none" style={{ background: '#090a0f' }}>
-      {/* Animated Three.js Liquid Ether Shader Ambient Background */}
+    <div className="relative w-full h-full overflow-hidden select-none" style={{ background: '#141518' }}>
+      {/* Dynamic Animated Three.js Liquid Ether Ambient & Cursor Reactive Fluid (Monochrome) */}
       {enableShader && (
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-60">
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
           <div style={{ width: '100%', height: '100%', position: 'relative' }}>
             <LiquidEther
-              colors={themeColors.gradient || ['#0f172a', '#475569', '#cbd5e1']}
-              mouseForce={18}
-              cursorSize={90}
-              isViscous
-              viscous={28}
-              iterationsViscous={28}
-              iterationsPoisson={28}
-              resolution={0.5}
+              colors={LIQUID_COLORS}
+              mouseForce={28}
+              cursorSize={150}
+              isViscous={false}
+              iterationsPoisson={2}
+              iterationsViscous={0}
+              resolution={0.2}
+              BFECC={false}
               isBounce={false}
               autoDemo
-              autoSpeed={0.4}
-              autoIntensity={2.0}
-              takeoverDuration={0.25}
-              autoResumeDelay={3000}
-              autoRampDuration={0.6}
+              autoSpeed={0.45}
+              autoIntensity={1.5}
+              takeoverDuration={0.15}
+              autoResumeDelay={1200}
+              autoRampDuration={0.4}
             />
           </div>
         </div>
       )}
-
-      {/* Dynamic ambient radial lighting overlays tuned to monochromatic theme */}
-      <div
-        className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none transition-all duration-700"
-        style={{ background: themeColors.primary || '#ffffff', opacity: 0.12 }}
-      />
-      <div
-        className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none transition-all duration-700"
-        style={{ background: themeColors.secondary || '#94a3b8', opacity: 0.12 }}
-      />
 
       {/* Main 3-Column Glass Layout */}
       <div className="relative z-10 flex h-full gap-2.5 p-3">
@@ -193,7 +183,6 @@ function AppLayout() {
       <GroupSessionModal />
       <WrappedModal />
       <PlaylistModal />
-      <UniversalReactPlayer showVideo={false} />
     </div>
   );
 }

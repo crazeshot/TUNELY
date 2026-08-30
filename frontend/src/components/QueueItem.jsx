@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Play, Pause, X, MoreVertical } from 'lucide-react';
 import { usePlayer } from '../context/usePlayer';
 import TrackContextMenu from './TrackContextMenu';
+import { getCoverUrl, handleCoverError } from '../utils/coverUrl';
 
 export default function QueueItem({ track, index }) {
   const { playTrack, togglePlay, removeFromQueue, currentTrack, isPlaying } = usePlayer();
@@ -38,16 +39,9 @@ export default function QueueItem({ track, index }) {
         {/* Track Number / Waveform / Circular Thumbnail */}
         <div className="relative shrink-0 w-9 h-9">
           <img
-            src={track.cover_url || track.cover || (track.videoId ? `https://i.ytimg.com/vi/${track.videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80')}
+            src={getCoverUrl(track)}
             alt={track.title}
-            referrerPolicy="no-referrer"
-            onError={(e) => {
-              if (track.videoId && !e.currentTarget.src.includes('i.ytimg.com')) {
-                e.currentTarget.src = `https://i.ytimg.com/vi/${track.videoId}/hqdefault.jpg`;
-              } else {
-                e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
-              }
-            }}
+            onError={(e) => handleCoverError(e, track)}
             className="w-9 h-9 rounded-full object-cover shadow-sm"
           />
 
@@ -62,7 +56,7 @@ export default function QueueItem({ track, index }) {
 
           {/* Playing waveform indicator */}
           {isCurrent && isPlaying && (
-            <div className="absolute inset-0 rounded-full bg-black/40 flex items-end justify-center pb-1 gap-[1.5px] text-pink-400 group-hover:opacity-0 transition-opacity">
+            <div className="absolute inset-0 rounded-full bg-black/40 flex items-end justify-center pb-1 gap-[1.5px] text-white group-hover:opacity-0 transition-opacity">
               <span className="wbar" style={{ height: '6px' }} />
               <span className="wbar" style={{ height: '11px' }} />
               <span className="wbar" style={{ height: '7px' }} />
@@ -74,7 +68,7 @@ export default function QueueItem({ track, index }) {
         <div className="flex-1 min-w-0">
           <p
             className={`text-xs font-semibold truncate ${
-              isCurrent ? 'text-pink-400' : 'text-white/90 group-hover:text-white'
+              isCurrent ? 'text-white font-bold' : 'text-white/90 group-hover:text-white'
             }`}
           >
             {track.title}

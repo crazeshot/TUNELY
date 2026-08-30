@@ -21,6 +21,7 @@ import { usePlayer } from '../context/usePlayer';
 import AudioCanvasVisualizer from './AudioCanvasVisualizer';
 import UniversalReactPlayer from './UniversalReactPlayer';
 import { parseLRC, getActiveLyricIndex, fetchLyricsFromLRCLIB } from '../services/lyricsService';
+import { getCoverUrl, handleCoverError } from '../utils/coverUrl';
 
 export default function VisualizerModal() {
   const {
@@ -48,7 +49,6 @@ export default function VisualizerModal() {
     isSpatialAudio,
     toggleSpatialAudio,
     setIsEqualizerOpen,
-    themeColors,
   } = usePlayer();
 
   const [visualMode, setVisualMode] = useState('vinyl'); // 'vinyl' | 'spectrum' | 'wave'
@@ -113,29 +113,29 @@ export default function VisualizerModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-2xl animate-fade-in text-white">
       <div
-        className="relative w-full max-w-5xl h-[88vh] rounded-3xl border border-white/15 p-6 sm:p-8 flex flex-col justify-between overflow-hidden shadow-2xl"
+        className="relative w-full max-w-5xl h-[88vh] rounded-3xl border border-white/10 p-6 sm:p-8 flex flex-col justify-between overflow-hidden shadow-2xl"
         style={{
-          background: 'linear-gradient(135deg, rgba(28, 12, 40, 0.98) 0%, rgba(10, 5, 18, 0.98) 100%)',
+          background: 'linear-gradient(135deg, rgba(26, 27, 32, 0.98) 0%, rgba(16, 17, 20, 0.98) 100%)',
         }}
       >
-        {/* Dynamic ambient color glows */}
+        {/* Dynamic ambient soft white/silver glows */}
         <div
           className="absolute -top-32 -left-32 w-96 h-96 rounded-full blur-[120px] pointer-events-none transition-all duration-700"
-          style={{ background: themeColors.primary, opacity: 0.25 }}
+          style={{ background: '#ffffff', opacity: 0.05 }}
         />
         <div
           className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full blur-[120px] pointer-events-none transition-all duration-700"
-          style={{ background: themeColors.secondary, opacity: 0.25 }}
+          style={{ background: '#a1a1aa', opacity: 0.04 }}
         />
 
         {/* Top Header: Title + Mode switchers + Close */}
         <div className="flex items-center justify-between z-10 pb-3 border-b border-white/10">
           <div>
-            <span className="text-[11px] font-semibold tracking-wider uppercase text-pink-400">
+            <span className="text-[11px] font-semibold tracking-wider uppercase text-white/60">
               Studio Visualizer & Lyrics
             </span>
-            <h2 className="text-xl font-bold" style={{ fontFamily: "'gg sans', sans-serif" }}>
-              {currentTrack.genre || 'Master Audio'}
+            <h2 className="text-xl font-bold text-white" style={{ fontFamily: "'gg sans', sans-serif" }}>
+              {currentTrack.title}
             </h2>
           </div>
 
@@ -210,13 +210,14 @@ export default function VisualizerModal() {
                       isPlaying ? 'animate-spin-slow' : ''
                     }`}
                     style={{
-                      boxShadow: `0 0 50px ${themeColors.glow}`,
+                      boxShadow: '0 0 40px rgba(255, 255, 255, 0.15)',
                     }}
                   >
                     <div className="w-full h-full rounded-full border-8 border-neutral-900 overflow-hidden relative flex items-center justify-center">
                       <img
-                        src={currentTrack.cover_url || currentTrack.cover}
+                        src={getCoverUrl(currentTrack)}
                         alt={currentTrack.title}
+                        onError={(e) => handleCoverError(e, currentTrack)}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute w-8 h-8 rounded-full bg-neutral-950 border-2 border-white/40 flex items-center justify-center">
@@ -237,11 +238,11 @@ export default function VisualizerModal() {
               {/* Right: Live Millisecond .LRC Synced Karaoke Lyrics with Click-to-Seek */}
               <div className="h-full flex flex-col justify-between bg-white/[0.03] border border-white/10 rounded-2xl p-6 overflow-hidden">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-pink-400">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-white/60">
                     Live Karaoke Synced Lyrics
                   </span>
                   <div className="w-24 h-5">
-                    <AudioCanvasVisualizer mode="bars" barCount={12} height={20} />
+                    <AudioCanvasVisualizer mode="bars" barCount={12} height={20} accentColor="#ffffff" secondaryColor="#71717a" />
                   </div>
                 </div>
 

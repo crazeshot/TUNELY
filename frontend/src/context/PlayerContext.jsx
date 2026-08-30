@@ -113,12 +113,12 @@ export function PlayerProvider({ children }) {
   // Sleep Timer
   const [sleepTimerSeconds, setSleepTimerSeconds] = useState(null);
 
-  // Theme & Toast
+  // Theme & Toast (Monochromatic Grey & White)
   const [themeColors, setThemeColors] = useState({
     primary: '#ffffff',
-    secondary: '#94a3b8',
-    glow: 'rgba(255, 255, 255, 0.35)',
-    gradient: ['#0f172a', '#475569', '#cbd5e1'],
+    secondary: '#a1a1aa',
+    glow: 'rgba(255, 255, 255, 0.25)',
+    gradient: ['#18181b', '#3f3f46', '#e4e4e7'],
   });
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -370,14 +370,31 @@ export function PlayerProvider({ children }) {
       audio.pause();
       setIsPlaying(false);
     } else {
+      // If audio has no src set yet, initialize from currentTrack
+      if (!audio.src || audio.src === '' || audio.src === window.location.href) {
+        if (currentTrack) {
+          let streamUrl = currentTrack.audio_url;
+          if (currentTrack.videoId) {
+            streamUrl = `http://127.0.0.1:8000/api/ytm/stream/${currentTrack.videoId}/`;
+          }
+          if (streamUrl) {
+            audio.src = streamUrl;
+            if (currentTime > 0) {
+              audio.currentTime = currentTime;
+            }
+          }
+        }
+      }
+
       audio.play().then(() => {
         setIsPlaying(true);
-      }).catch(() => {
+      }).catch((err) => {
+        console.warn('[Audio] Resume notice:', err);
         playSynthFallback();
         setIsPlaying(true);
       });
     }
-  }, [isLoggedIn, setIsAuthModalOpen, showToast, isPlaying, playSynthFallback]);
+  }, [isLoggedIn, setIsAuthModalOpen, showToast, isPlaying, playSynthFallback, currentTrack, currentTime]);
 
   const pauseTrack = useCallback(() => {
     const audio = audioRef.current;
@@ -496,7 +513,21 @@ export function PlayerProvider({ children }) {
     onEndedRef.current = handleTrackEnd;
   }, [handleTrackEnd]);
 
-  // Initialize HTML5 Audio element & Web Audio DSP engine
+  // Stable refs so media-session & audio-init effect never need to re-run
+  const togglePlayRef = useRef(null);
+  const pauseTrackRef = useRef(null);
+  const handlePrevRef = useRef(null);
+  const handleNextRef = useRef(null);
+  const seekToRef = useRef(null);
+  const playSynthFallbackRef = useRef(null);
+  useEffect(() => { togglePlayRef.current = togglePlay; }, [togglePlay]);
+  useEffect(() => { pauseTrackRef.current = pauseTrack; }, [pauseTrack]);
+  useEffect(() => { handlePrevRef.current = handlePrev; }, [handlePrev]);
+  useEffect(() => { handleNextRef.current = handleNext; }, [handleNext]);
+  useEffect(() => { seekToRef.current = seekTo; }, [seekTo]);
+  useEffect(() => { playSynthFallbackRef.current = playSynthFallback; }, [playSynthFallback]);
+
+  // Initialize HTML5 Audio element & Web Audio DSP engine — runs ONCE only
   useEffect(() => {
     const audio = new Audio();
     audio.preload = 'metadata';
@@ -505,8 +536,12 @@ export function PlayerProvider({ children }) {
 
     audioEngine.init(audio);
 
+    let lastTimeUpdate = 0;
     const handleTimeUpdate = () => {
       if (!audio.duration || isNaN(audio.duration)) return;
+      const now = performance.now();
+      if (now - lastTimeUpdate < 150 && audio.currentTime < audio.duration) return;
+      lastTimeUpdate = now;
       setCurrentTime(audio.currentTime);
       setProgressState((audio.currentTime / audio.duration) * 100);
     };
@@ -525,7 +560,7 @@ export function PlayerProvider({ children }) {
 
     const handleError = () => {
       console.warn('[Audio] URL note, triggering fallback.');
-      playSynthFallback();
+      if (playSynthFallbackRef.current) playSynthFallbackRef.current();
     };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -533,15 +568,15 @@ export function PlayerProvider({ children }) {
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
-    // Register Media Session Handlers
+    // Register Media Session Handlers — use refs so always up-to-date
     if ('mediaSession' in navigator) {
-      navigator.mediaSession.setActionHandler('play', () => togglePlay());
-      navigator.mediaSession.setActionHandler('pause', () => pauseTrack());
-      navigator.mediaSession.setActionHandler('previoustrack', () => handlePrev());
-      navigator.mediaSession.setActionHandler('nexttrack', () => handleNext());
+      navigator.mediaSession.setActionHandler('play', () => togglePlayRef.current?.());
+      navigator.mediaSession.setActionHandler('pause', () => pauseTrackRef.current?.());
+      navigator.mediaSession.setActionHandler('previoustrack', () => handlePrevRef.current?.());
+      navigator.mediaSession.setActionHandler('nexttrack', () => handleNextRef.current?.());
       navigator.mediaSession.setActionHandler('seekto', (details) => {
         if (details.seekTime && audio.duration) {
-          seekTo((details.seekTime / audio.duration) * 100);
+          seekToRef.current?.((details.seekTime / audio.duration) * 100);
         }
       });
     }
@@ -553,24 +588,7 @@ export function PlayerProvider({ children }) {
       audio.removeEventListener('error', handleError);
       audio.pause();
     };
-  }, [playSynthFallback, togglePlay, pauseTrack, handlePrev, handleNext, seekTo]);
-
-  // Load track source into Audio element when currentTrack changes
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !currentTrack) return;
-
-    if (currentTrack.audio_url) {
-      audio.src = currentTrack.audio_url;
-      audio.load();
-      if (isPlaying) {
-        audioEngine.resume();
-        audio.play().catch(() => {
-          playSynthFallback();
-        });
-      }
-    }
-  }, [currentTrack, isPlaying, playSynthFallback]);
+  }, []); // ← intentionally empty: audio element created once for app lifetime
 
   // Sync volume with audio element
   useEffect(() => {

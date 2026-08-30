@@ -2,6 +2,7 @@ import { ChevronRight, Trash2, ListMusic, Music, Sparkles, RefreshCw, Disc } fro
 import QueueItem from './QueueItem';
 import { usePlayer } from '../context/usePlayer';
 import AudioCanvasVisualizer from './AudioCanvasVisualizer';
+import { getCoverUrl, handleCoverError } from '../utils/coverUrl';
 
 export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
   const { queue, clearQueue, currentTrack, isPlaying, refreshRealtimeQueue } = usePlayer();
@@ -96,7 +97,7 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
                   onClick={() => refreshRealtimeQueue(currentTrack, true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-xs text-white/90 font-medium transition-all hover:scale-105 active:scale-95"
                 >
-                  <Sparkles size={13} className="text-pink-400" />
+                  <Sparkles size={13} className="text-white" />
                   Auto-Fill Live Queue
                 </button>
               )}
@@ -114,16 +115,9 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
             <div className="flex items-center gap-3">
               <div className="relative shrink-0">
                 <img
-                  src={currentTrack.cover_url || currentTrack.cover || (currentTrack.videoId ? `https://i.ytimg.com/vi/${currentTrack.videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80')}
+                  src={getCoverUrl(currentTrack)}
                   alt={currentTrack.title}
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    if (currentTrack.videoId && !e.currentTarget.src.includes('i.ytimg.com')) {
-                      e.currentTarget.src = `https://i.ytimg.com/vi/${currentTrack.videoId}/hqdefault.jpg`;
-                    } else {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
-                    }
-                  }}
+                  onError={(e) => handleCoverError(e, currentTrack)}
                   className="w-10 h-10 rounded-xl object-cover shadow-md ring-1 ring-white/20"
                 />
                 {isPlaying && (

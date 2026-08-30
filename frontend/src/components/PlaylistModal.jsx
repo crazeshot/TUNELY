@@ -1,5 +1,6 @@
 import { X, Play, Shuffle, Trash2, Music, Clock, Plus } from 'lucide-react';
 import { usePlayer } from '../context/usePlayer';
+import { getCoverUrl, handleCoverError } from '../utils/coverUrl';
 
 export default function PlaylistModal() {
   const {
@@ -149,16 +150,9 @@ export default function PlaylistModal() {
                       #{idx + 1}
                     </span>
                     <img
-                      src={t.cover_url || t.cover || (t.videoId ? `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80')}
+                      src={getCoverUrl(t)}
                       alt={t.title}
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        if (t.videoId && !e.currentTarget.src.includes('i.ytimg.com')) {
-                          e.currentTarget.src = `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg`;
-                        } else {
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
-                        }
-                      }}
+                      onError={(e) => handleCoverError(e, t)}
                       className="w-10 h-10 rounded-xl object-cover shadow-sm shrink-0"
                     />
                     <div className="truncate">
