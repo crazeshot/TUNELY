@@ -293,6 +293,28 @@ export function PlayerProvider({ children }) {
     }
   }, []);
 
+  // Real-time Queue System (Dynamically fetched from YouTube Music)
+  const refreshRealtimeQueue = useCallback(async (trackToUse = null, force = false) => {
+    const target = trackToUse || currentTrack;
+    if (!target) return;
+    try {
+      const vid = target.videoId || null;
+      const artist = target.artist_name || target.artist || '';
+      const title = target.title || '';
+
+      const relatedTracks = await api.getYtmRelated(vid, artist, title, 10);
+      if (relatedTracks && relatedTracks.length > 0) {
+        const filtered = relatedTracks.filter((t) => t && t.videoId !== vid);
+        if (filtered.length > 0) {
+          setQueue(prev => (force || prev.length === 0 ? filtered : prev));
+          return filtered;
+        }
+      }
+    } catch (err) {
+      console.warn('[Realtime Queue] Sync note:', err);
+    }
+  }, [currentTrack]);
+
   // Playback Actions
   const playTrack = useCallback((track) => {
     if (!isLoggedIn) {
@@ -305,6 +327,11 @@ export function PlayerProvider({ children }) {
     setCurrentTime(0);
     setProgressState(0);
     setHistory(prev => [track, ...prev.filter(t => t.id !== track.id)].slice(0, 20));
+
+    // Dynamically fetch and populate real-time queue for the played song
+    if (track) {
+      refreshRealtimeQueue(track, false);
+    }
 
     const audio = audioRef.current;
     if (audio) {
@@ -327,7 +354,7 @@ export function PlayerProvider({ children }) {
     if (track.id && !track.is_ytm) {
       api.recordPlay(track.id);
     }
-  }, [isLoggedIn, setIsAuthModalOpen, showToast, playSynthFallback]);
+  }, [isLoggedIn, setIsAuthModalOpen, showToast, playSynthFallback, refreshRealtimeQueue]);
 
   const togglePlay = useCallback(() => {
     if (!isLoggedIn) {
@@ -938,6 +965,8 @@ export function PlayerProvider({ children }) {
     removeFromQueue,
     removeQueue: removeFromQueue,
     clearQueue,
+    refreshRealtimeQueue,
+    fetchRelatedQueue: refreshRealtimeQueue,
     toggleLike,
     createPlaylist,
     deletePlaylist,

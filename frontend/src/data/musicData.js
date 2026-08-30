@@ -153,50 +153,12 @@ export const recentlyPlayed = [
   },
 ];
 
-export const initialQueue = [
-  {
-    id: 9,
-    title: 'Get Lucky',
-    artist: 'Daft Punk',
-    artist_name: 'Daft Punk',
-    cover: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&auto=format&fit=crop&q=80',
-    cover_url: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&auto=format&fit=crop&q=80',
-    audio_url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=electronic-future-beats-117997.mp3',
-    duration: '4:08',
-    durationSeconds: 248,
-    genre: 'Disco / Funk',
-  },
-  {
-    id: 10,
-    title: 'Borderline',
-    artist: 'Tame Impala',
-    artist_name: 'Tame Impala',
-    cover: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=600&auto=format&fit=crop&q=80',
-    cover_url: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=600&auto=format&fit=crop&q=80',
-    audio_url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=electronic-future-beats-117997.mp3',
-    duration: '3:57',
-    durationSeconds: 237,
-    genre: 'Psychedelic Pop',
-  },
-  {
-    id: 11,
-    title: 'Pink + White',
-    artist: 'Frank Ocean',
-    artist_name: 'Frank Ocean',
-    cover: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&auto=format&fit=crop&q=80',
-    cover_url: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&auto=format&fit=crop&q=80',
-    audio_url: 'https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3?filename=smoke-143172.mp3',
-    duration: '3:04',
-    durationSeconds: 184,
-    genre: 'R&B / Soul',
-  },
-];
+export const initialQueue = [];
 
 export const allTracks = [
   defaultTrack,
   ...recommended,
   ...recentlyPlayed,
-  ...initialQueue,
 ];
 
 export const genresList = [
