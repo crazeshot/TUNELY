@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Play, Sparkles, Heart, Clock, Disc, Users, Command, Trophy, Download, Radio, Search } from 'lucide-react';
+import { Play, Sparkles, Heart, Clock, Disc, Users, Trophy, Download, Radio, Search, Command } from 'lucide-react';
 import SearchBar from './SearchBar';
 import AlbumCard from './AlbumCard';
 import BottomNav from './BottomNav';
 import AudioCanvasVisualizer from './AudioCanvasVisualizer';
 import SettingsPage from './SettingsPage';
+import ProfileDropdown from './ProfileDropdown';
 import { recommended, recentlyPlayed, allTracks, genresList } from '../data/musicData';
 import { usePlayer } from '../context/usePlayer';
 import { useAuth } from '../context/useAuth';
@@ -34,12 +35,12 @@ export default function MainContent() {
     dailyMixes,
     addToQueue,
     setActiveArtistModal,
-    setIsCommandPaletteOpen,
+    setActivePlaylistModal,
   } = usePlayer();
 
-  const { setIsWrappedOpen } = useAuth();
+  const { user, setIsWrappedOpen } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchSource, setSearchSource] = useState('all'); // 'all' | 'ytm'
+  const [searchSource, setSearchSource] = useState('ytm'); // 'ytm' | 'all'
   const [dbTracks, setDbTracks] = useState([]);
   const [offlineTrackList, setOfflineTrackList] = useState([]);
   const [ytmSearchResults, setYtmSearchResults] = useState([]);
@@ -67,9 +68,12 @@ export default function MainContent() {
   // Fetch YouTube Music Trending
   useEffect(() => {
     let isMounted = true;
-    api.getYtmTrending().then((tracks) => {
-      if (isMounted && tracks && tracks.length > 0) setYtmTrending(tracks);
-    });
+    const fetchTrending = api.getYTMTrending || api.getYtmTrending;
+    if (typeof fetchTrending === 'function') {
+      fetchTrending.call(api).then((tracks) => {
+        if (isMounted && tracks && tracks.length > 0) setYtmTrending(tracks);
+      }).catch(() => {});
+    }
     return () => { isMounted = false; };
   }, []);
 
@@ -81,8 +85,11 @@ export default function MainContent() {
     }
     setIsYtmLoading(true);
     try {
-      const results = await api.searchYtm(query.trim());
-      setYtmSearchResults(results || []);
+      const searchFn = api.searchYTM || api.searchYtm;
+      if (typeof searchFn === 'function') {
+        const results = await searchFn.call(api, query.trim());
+        setYtmSearchResults(results || []);
+      }
     } catch {
       setYtmSearchResults([]);
     } finally {
@@ -165,295 +172,283 @@ export default function MainContent() {
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
       {/* Scrollable Main View */}
       <div className="flex-1 overflow-y-auto px-3 pt-2 pb-4 space-y-6">
-        {/* Top Search Bar (on Home and Search tabs) */}
-        {(activeTab === 'home' || activeTab === 'search') && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <SearchBar
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  onClear={() => setSearchQuery('')}
-                />
-              </div>
-              <button
-                onClick={() => setIsCommandPaletteOpen(true)}
-                className="hidden sm:flex items-center gap-1.5 px-4 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs text-white/70 hover:text-white transition-all shadow-md shrink-0"
-                title="Open Command Palette (Ctrl+K)"
-              >
-                <Command size={13} className="text-white/70" />
-                <span className="font-mono text-[11px]">Ctrl+K</span>
-              </button>
-            </div>
-
-            {/* Search Source Switcher */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setSearchSource('all')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                  searchSource === 'all'
-                    ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
-                    : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10'
-                }`}
-              >
-                <Disc size={12} />
-                <span>Tunely Catalog</span>
-              </button>
-
-              <button
-                onClick={() => setSearchSource('ytm')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                  searchSource === 'ytm'
-                    ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
-                    : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10'
-                }`}
-              >
-                <Radio size={12} />
-                <span>YouTube Music (Search Millions)</span>
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* ── TAB 1: HOME ────────────────────────────────────────── */}
         {activeTab === 'home' && (
-          <>
-            {searchSource === 'ytm' && searchQuery.trim() ? (
-              /* If user switched to YTM source and typed search on Home */
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <SectionTitle>YouTube Music Results for &quot;{searchQuery}&quot;</SectionTitle>
-                  {isYtmLoading && <span className="text-xs text-white/70 animate-pulse">Searching...</span>}
-                </div>
-                {displayedYtmTracks.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-                    {displayedYtmTracks.map((t, i) => (
-                      <AlbumCard key={t.id} track={t} delay={i * 30} />
-                    ))}
-                  </div>
-                ) : !isYtmLoading ? (
-                  <div className="py-12 text-center text-white/40 text-xs">
-                    No matching songs found on YouTube Music.
-                  </div>
-                ) : null}
+          <div className="space-y-6">
+            {/* Top Quick Spotlight Header (Ctrl+K only, no search input) */}
+            <div className="flex items-center justify-between pb-1">
+              <div>
+                <h1
+                  className="text-xl sm:text-2xl font-bold text-white tracking-tight"
+                  style={{ fontFamily: "'gg sans', sans-serif" }}
+                >
+                  Welcome back, {user?.display_name || user?.username || 'Audiophile'}
+                </h1>
+                <p className="text-xs text-white/50 mt-0.5">
+                  Listen to high-fidelity audio streams and trending songs
+                </p>
               </div>
-            ) : (
-              /* Regular Home Feed */
-              <>
-                {/* Featured Hero Banner */}
-                {!searchQuery && (
-                  <div
-                    className="relative rounded-3xl overflow-hidden p-6 sm:p-8 flex flex-col justify-between shadow-2xl border border-white/15 transition-all duration-700"
-                    style={{
-                      minHeight: '230px',
-                      background: `linear-gradient(135deg, rgba(30, 35, 45, 0.95) 0%, rgba(12, 14, 20, 0.98) 100%)`,
-                    }}
+
+              {/* Profile Picture Dropdown */}
+              <div className="shrink-0">
+                <ProfileDropdown />
+              </div>
+            </div>
+
+            {/* Featured Hero Banner */}
+            <div
+              className="relative rounded-3xl overflow-hidden p-6 sm:p-8 flex flex-col justify-between shadow-2xl border border-white/15 transition-all duration-700"
+              style={{
+                minHeight: '230px',
+                background: `linear-gradient(135deg, rgba(30, 35, 45, 0.95) 0%, rgba(12, 14, 20, 0.98) 100%)`,
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+
+              {/* Ambient Visualizer waveform */}
+              <div className="absolute right-4 bottom-4 w-48 h-16 opacity-40 pointer-events-none hidden sm:block">
+                <AudioCanvasVisualizer mode="wave" height={60} />
+              </div>
+
+              <div className="relative z-10 space-y-2 max-w-lg">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-white">
+                  <Sparkles size={12} />
+                  <span>Featured Track of the Day</span>
+                </div>
+                <h2
+                  className="text-white text-2xl sm:text-4xl font-extrabold tracking-tight drop-shadow-md"
+                  style={{ fontFamily: "'gg sans', sans-serif" }}
+                >
+                  {featuredTrack?.title || 'Midnight City'}
+                </h2>
+                <p
+                  className="text-white/80 text-xs sm:text-sm hover:underline cursor-pointer inline-block"
+                  onClick={() => setActiveArtistModal(featuredTrack)}
+                >
+                  {featuredTrack?.artist_name || featuredTrack?.artist} • {featuredTrack?.genre || 'Dream Pop'}
+                </p>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    onClick={() => playTrack(featuredTrack)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-neutral-200 text-black text-xs font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 transition-all"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
-
-                    {/* Ambient Visualizer waveform */}
-                    <div className="absolute right-4 bottom-4 w-48 h-16 opacity-40 pointer-events-none hidden sm:block">
-                      <AudioCanvasVisualizer mode="wave" height={60} />
-                    </div>
-
-                    <div className="relative z-10 space-y-2 max-w-lg">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-white">
-                        <Sparkles size={12} />
-                        <span>Featured Track of the Day</span>
-                      </div>
-                      <h1
-                        className="text-white text-2xl sm:text-4xl font-extrabold tracking-tight drop-shadow-md"
-                        style={{ fontFamily: "'gg sans', sans-serif" }}
-                      >
-                        {featuredTrack?.title || 'Midnight City'}
-                      </h1>
-                      <p
-                        className="text-white/80 text-xs sm:text-sm hover:underline cursor-pointer inline-block"
-                        onClick={() => setActiveArtistModal(featuredTrack)}
-                      >
-                        {featuredTrack?.artist_name || featuredTrack?.artist} • {featuredTrack?.genre || 'Dream Pop'}
-                      </p>
-
-                      <div className="flex items-center gap-3 pt-2">
-                        <button
-                          onClick={() => playTrack(featuredTrack)}
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-neutral-200 text-black text-xs font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 transition-all"
-                        >
-                          <Play size={14} className="fill-black" />
-                          <span>Play Now</span>
-                        </button>
-                        <button
-                          onClick={() => addToQueue(featuredTrack)}
-                          className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-medium backdrop-blur-md transition-all"
-                        >
-                          Add to Queue
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Tunely Wrapped Mini Teaser Banner */}
-                {!searchQuery && (
-                  <div
-                    onClick={() => setIsWrappedOpen(true)}
-                    className="relative rounded-2xl p-4 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-transparent border border-white/15 flex items-center justify-between cursor-pointer hover:scale-101 transition-all shadow-lg group"
+                    <Play size={14} className="fill-black" />
+                    <span>Play Now</span>
+                  </button>
+                  <button
+                    onClick={() => addToQueue(featuredTrack)}
+                    className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-medium backdrop-blur-md transition-all"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center shadow-md">
-                        <Trophy size={18} />
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold text-white group-hover:text-white/80 transition-colors">
-                          Your 2026 Tunely Wrapped is Ready!
-                        </h3>
-                        <p className="text-[11px] text-white/60">Discover your top tracks, minutes streamed & music personality</p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-semibold text-white group-hover:translate-x-1 transition-transform">
-                      View Story →
-                    </span>
-                  </div>
-                )}
+                    Add to Queue
+                  </button>
+                </div>
+              </div>
+            </div>
 
-                {/* Mood Selector Pills */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-                  {MOODS.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setActiveMood(m.id)}
-                      className={`
-                        flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200
-                        ${
-                          activeMood === m.id
-                            ? 'bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.25)] scale-105'
-                            : 'bg-white/10 hover:bg-white/15 text-white/70 hover:text-white border border-white/10'
-                        }
-                      `}
+            {/* Tunely Wrapped Mini Teaser Banner */}
+            <div
+              onClick={() => setIsWrappedOpen(true)}
+              className="relative rounded-2xl p-4 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-transparent border border-white/15 flex items-center justify-between cursor-pointer hover:scale-101 transition-all shadow-lg group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center shadow-md">
+                  <Trophy size={18} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-white group-hover:text-white/80 transition-colors">
+                    Your 2026 Tunely Wrapped is Ready!
+                  </h3>
+                  <p className="text-[11px] text-white/60">Discover your top tracks, minutes streamed & music personality</p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-white group-hover:translate-x-1 transition-transform">
+                View Story →
+              </span>
+            </div>
+
+            {/* Mood Selector Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {MOODS.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setActiveMood(m.id)}
+                  className={`
+                    flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200
+                    ${
+                      activeMood === m.id
+                        ? 'bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.25)] scale-105'
+                        : 'bg-white/10 hover:bg-white/15 text-white/70 hover:text-white border border-white/10'
+                    }
+                  `}
+                >
+                  <span>{m.emoji}</span>
+                  <span>{m.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Genre Filter Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {genresList.map((g) => (
+                <button
+                  key={g.name}
+                  onClick={() => setActiveGenre(g.name)}
+                  className={`
+                    px-3.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-all duration-200
+                    ${
+                      activeGenre === g.name
+                        ? 'bg-white text-black font-semibold shadow-sm'
+                        : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/5'
+                    }
+                  `}
+                >
+                  {g.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Curated Daily Mixes Section */}
+            {dailyMixes.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <SectionTitle>Made For You: Daily Mixes</SectionTitle>
+                  <span className="text-xs text-white/40">{dailyMixes.length} stations</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {dailyMixes.map((mix) => (
+                    <div
+                      key={mix.id}
+                      onClick={() => {
+                        if (mix.tracks && mix.tracks.length > 0) playTrack(mix.tracks[0]);
+                      }}
+                      className="p-4 rounded-2xl bg-white/[0.04] hover:bg-white/10 border border-white/10 cursor-pointer transition-all hover:scale-102 group flex items-center gap-3.5"
                     >
-                      <span>{m.emoji}</span>
-                      <span>{m.label}</span>
-                    </button>
+                      <img
+                        src={mix.cover_url}
+                        alt={mix.title}
+                        className="w-14 h-14 rounded-xl object-cover shadow-md group-hover:ring-2 group-hover:ring-white/40"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-bold text-white truncate">{mix.title}</h4>
+                        <p className="text-[11px] text-white/50 line-clamp-2 mt-0.5">{mix.description}</p>
+                      </div>
+                    </div>
                   ))}
                 </div>
-
-                {/* Genre Filter Pills */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-                  {genresList.map((g) => (
-                    <button
-                      key={g.name}
-                      onClick={() => setActiveGenre(g.name)}
-                      className={`
-                        px-3.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-all duration-200
-                        ${
-                          activeGenre === g.name
-                            ? 'bg-white text-black font-semibold shadow-sm'
-                            : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/5'
-                        }
-                      `}
-                    >
-                      {g.name}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Curated Daily Mixes Section */}
-                {dailyMixes.length > 0 && !searchQuery && (
-                  <section>
-                    <div className="flex items-center justify-between mb-3">
-                      <SectionTitle>Made For You: Daily Mixes</SectionTitle>
-                      <span className="text-xs text-white/40">{dailyMixes.length} stations</span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {dailyMixes.map((mix) => (
-                        <div
-                          key={mix.id}
-                          onClick={() => {
-                            if (mix.tracks && mix.tracks.length > 0) playTrack(mix.tracks[0]);
-                          }}
-                          className="p-4 rounded-2xl bg-white/[0.04] hover:bg-white/10 border border-white/10 cursor-pointer transition-all hover:scale-102 group flex items-center gap-3.5"
-                        >
-                          <img
-                            src={mix.cover_url}
-                            alt={mix.title}
-                            className="w-14 h-14 rounded-xl object-cover shadow-md group-hover:ring-2 group-hover:ring-white/40"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <h4 className="text-xs font-bold text-white truncate">{mix.title}</h4>
-                            <p className="text-[11px] text-white/50 line-clamp-2 mt-0.5">{mix.description}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Recommended Section */}
-                {recList.length > 0 && (
-                  <section>
-                    <div className="flex items-center justify-between mb-3">
-                      <SectionTitle>Recommended For You</SectionTitle>
-                      <span className="text-xs text-white/40">{recList.length} tracks</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-                      {recList.map((t, i) => (
-                        <AlbumCard key={t.id} track={t} delay={i * 60} />
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Popular Artists Carousel */}
-                {popularArtists.length > 0 && !searchQuery && (
-                  <section className="pt-2">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Users size={16} className="text-white/80" />
-                        <SectionTitle>Popular Artists</SectionTitle>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                      {popularArtists.map((artist) => (
-                        <div
-                          key={artist.name}
-                          onClick={() => setActiveArtistModal(artist)}
-                          className="flex flex-col items-center text-center p-3 rounded-2xl bg-white/[0.03] hover:bg-white/10 border border-white/5 cursor-pointer transition-all hover:scale-105 group"
-                        >
-                          <img
-                            src={artist.avatar}
-                            alt={artist.name}
-                            className="w-16 h-16 rounded-full object-cover shadow-lg mb-2 group-hover:ring-2 group-hover:ring-white/40 transition-all"
-                          />
-                          <p className="text-xs font-bold text-white truncate max-w-full">{artist.name}</p>
-                          <span className="text-[10px] text-white/40">{artist.genre}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Recently Played Section */}
-                {recentList.length > 0 && (
-                  <section>
-                    <div className="flex items-center justify-between mb-3">
-                      <SectionTitle>Recently Streamed</SectionTitle>
-                      <span className="text-xs text-white/40">{recentList.length} tracks</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-                      {recentList.map((t, i) => (
-                        <AlbumCard key={`rec-${t.id}`} track={t} delay={i * 40} />
-                      ))}
-                    </div>
-                  </section>
-                )}
-              </>
+              </section>
             )}
-          </>
+
+            {/* Recommended Section */}
+            {recList.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <SectionTitle>Recommended For You</SectionTitle>
+                  <span className="text-xs text-white/40">{recList.length} tracks</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                  {recList.map((t, i) => (
+                    <AlbumCard key={t.id} track={t} delay={i * 60} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Popular Artists Carousel */}
+            {popularArtists.length > 0 && (
+              <section className="pt-2">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Users size={16} className="text-white/80" />
+                    <SectionTitle>Popular Artists</SectionTitle>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                  {popularArtists.map((artist) => (
+                    <div
+                      key={artist.name}
+                      onClick={() => setActiveArtistModal(artist)}
+                      className="flex flex-col items-center text-center p-3 rounded-2xl bg-white/[0.03] hover:bg-white/10 border border-white/5 cursor-pointer transition-all hover:scale-105 group"
+                    >
+                      <img
+                        src={artist.avatar}
+                        alt={artist.name}
+                        className="w-16 h-16 rounded-full object-cover shadow-lg mb-2 group-hover:ring-2 group-hover:ring-white/40 transition-all"
+                      />
+                      <p className="text-xs font-bold text-white truncate max-w-full">{artist.name}</p>
+                      <span className="text-[10px] text-white/40">{artist.genre}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Recently Played Section */}
+            {recentList.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <SectionTitle>Recently Streamed</SectionTitle>
+                  <span className="text-xs text-white/40">{recentList.length} tracks</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                  {recentList.map((t, i) => (
+                    <AlbumCard key={`rec-${t.id}`} track={t} delay={i * 40} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
         )}
 
-        {/* ── TAB 2: SEARCH ──────────────────────────────────────── */}
+        {/* ── TAB 2: SEARCH (Dedicated Search Center) ─────────────── */}
         {activeTab === 'search' && (
           <div className="space-y-6">
+            {/* Interactive Search Bar moved to Search Page */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <SearchBar
+                    value={searchQuery}
+                    autoFocus={true}
+                    onChange={setSearchQuery}
+                    onClear={() => setSearchQuery('')}
+                  />
+                </div>
+                <div className="shrink-0">
+                  <ProfileDropdown />
+                </div>
+              </div>
+
+              {/* Search Source Switcher */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSearchSource('ytm')}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    searchSource === 'ytm'
+                      ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
+                      : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10'
+                  }`}
+                >
+                  <Radio size={13} />
+                  <span>YouTube Music (Search Millions)</span>
+                </button>
+
+                <button
+                  onClick={() => setSearchSource('all')}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    searchSource === 'all'
+                      ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
+                      : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10'
+                  }`}
+                >
+                  <Disc size={13} />
+                  <span>Tunely Audio Catalog</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Search Results / Trending Exploration */}
             {searchSource === 'ytm' ? (
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -504,7 +499,7 @@ export default function MainContent() {
                   </div>
                 ) : (
                   <div className="py-16 text-center text-white/40 text-xs">
-                    No matching catalog songs found. Try switching to YouTube Music above!
+                    No matching catalog songs found. Try searching on YouTube Music!
                   </div>
                 )}
               </div>
@@ -575,9 +570,7 @@ export default function MainContent() {
                   <div
                     key={pl.id}
                     className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer group"
-                    onClick={() => {
-                      if (pl.tracks && pl.tracks.length > 0) playTrack(pl.tracks[0]);
-                    }}
+                    onClick={() => setActivePlaylistModal(pl)}
                   >
                     <img
                       src={pl.cover_url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'}

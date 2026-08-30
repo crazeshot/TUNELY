@@ -107,6 +107,7 @@ export function PlayerProvider({ children }) {
   const [isGroupSessionOpen, setIsGroupSessionOpen] = useState(false);
   const [groupSessionCode, setGroupSessionCode] = useState('TUNELY-8820');
   const [activeArtistModal, setActiveArtistModal] = useState(null);
+  const [activePlaylistModal, setActivePlaylistModal] = useState(null);
   const [shareTrackModal, setShareTrackModal] = useState(null);
 
   // Sleep Timer
@@ -736,6 +737,28 @@ export function PlayerProvider({ children }) {
     await api.removeTrackFromPlaylist(playlistId, trackId);
   }, [showToast]);
 
+  const deletePlaylist = useCallback((playlistId) => {
+    setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+    setActivePlaylistModal(null);
+    showToast('Playlist deleted');
+  }, [showToast]);
+
+  const playPlaylist = useCallback((playlist, shuffle = false) => {
+    if (!playlist || !playlist.tracks || playlist.tracks.length === 0) {
+      showToast('Playlist is currently empty');
+      return;
+    }
+    let tracks = [...playlist.tracks];
+    if (shuffle) {
+      tracks.sort(() => Math.random() - 0.5);
+    }
+    const first = tracks[0];
+    const rest = tracks.slice(1);
+    setQueue(rest);
+    playTrack(first);
+    showToast(`Playing playlist: "${playlist.title}"`);
+  }, [playTrack, showToast]);
+
   const toggleAutoplay = useCallback(() => {
     setIsAutoplay(prev => {
       const next = !prev;
@@ -880,8 +903,12 @@ export function PlayerProvider({ children }) {
     clearQueue,
     toggleLike,
     createPlaylist,
+    deletePlaylist,
+    playPlaylist,
     addTrackToPlaylist,
     removeTrackFromPlaylist,
+    activePlaylistModal,
+    setActivePlaylistModal,
     setActiveTab,
     setActiveGenre,
     setActiveMood,

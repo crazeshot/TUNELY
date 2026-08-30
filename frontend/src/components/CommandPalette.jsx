@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Search,
   Play,
@@ -11,9 +11,12 @@ import {
   Home,
   LayoutGrid,
   Settings,
+  Radio,
+  ExternalLink,
 } from 'lucide-react';
 import { usePlayer } from '../context/usePlayer';
 import { allTracks } from '../data/musicData';
+import { api } from '../services/api';
 
 export default function CommandPalette() {
   const {
@@ -31,6 +34,8 @@ export default function CommandPalette() {
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [ytmResults, setYtmResults] = useState([]);
+  const [isYtmLoading, setIsYtmLoading] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -40,10 +45,51 @@ export default function CommandPalette() {
         setSelectedIndex(0);
       }, 50);
       return () => clearTimeout(timer);
+    } else {
+      setQuery('');
+      setYtmResults([]);
     }
   }, [isCommandPaletteOpen]);
 
-  const actions = [
+  // Debounced search on YouTube Music
+  const searchYtmLive = useCallback(async (text) => {
+    if (!text.trim()) {
+      setYtmResults([]);
+      return;
+    }
+    setIsYtmLoading(true);
+    try {
+      const searchFn = api.searchYTM || api.searchYtm;
+      if (typeof searchFn === 'function') {
+        const res = await searchFn.call(api, text.trim(), 8);
+        setYtmResults(res || []);
+      }
+    } catch {
+      setYtmResults([]);
+    } finally {
+      setIsYtmLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (query.trim()) {
+        searchYtmLive(query);
+      } else {
+        setYtmResults([]);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query, searchYtmLive]);
+
+  const actions = useMemo(() => [
+    {
+      id: 'act-search-page',
+      title: query ? `Search for "${query}" on YouTube Music page` : 'Open Search Page',
+      category: 'Search',
+      icon: Search,
+      run: () => setActiveTab('search'),
+    },
     {
       id: 'act-vis',
       title: 'Open Studio Visualizer & Lyrics',
@@ -81,7 +127,7 @@ export default function CommandPalette() {
     },
     {
       id: 'act-home',
-      title: 'Navigate to Explore Music',
+      title: 'Navigate to Explore Music (Home)',
       category: 'Navigation',
       icon: Home,
       run: () => setActiveTab('home'),
@@ -107,32 +153,58 @@ export default function CommandPalette() {
       icon: Trash2,
       run: () => clearQueue(),
     },
-  ];
+  ], [query, setActiveTab, setIsVisualizerOpen, setIsEqualizerOpen, toggleSlowedReverb, toggleNightcore, setIsSleepTimerOpen, clearQueue]);
 
-  const filteredTracks = query.trim()
-    ? allTracks
-        .filter(
-          (t) =>
-            t.title.toLowerCase().includes(query.toLowerCase()) ||
-            (t.artist_name || t.artist).toLowerCase().includes(query.toLowerCase()) ||
-            (t.genre || '').toLowerCase().includes(query.toLowerCase())
-        )
-        .map((t) => ({
-          id: `track-${t.id}`,
-          title: t.title,
-          subtitle: `${t.artist_name || t.artist} • ${t.genre}`,
-          category: 'Tracks',
-          icon: Play,
-          track: t,
-          run: () => playTrack(t),
-        }))
-    : [];
+  // Catalog tracks match
+  const filteredCatalogTracks = useMemo(() => {
+    if (!query.trim()) return [];
+    return allTracks
+      .filter(
+        (t) =>
+          t.title.toLowerCase().includes(query.toLowerCase()) ||
+          (t.artist_name || t.artist).toLowerCase().includes(query.toLowerCase()) ||
+          (t.genre || '').toLowerCase().includes(query.toLowerCase())
+      )
+      .map((t) => ({
+        id: `track-${t.id}`,
+        title: t.title,
+        subtitle: `${t.artist_name || t.artist} • ${t.genre || 'Song'}`,
+        category: 'Catalog Song',
+        icon: Play,
+        cover: t.cover_url || t.cover,
+        track: t,
+        run: () => playTrack(t),
+      }));
+  }, [query, playTrack]);
 
-  const filteredActions = actions.filter((a) =>
-    a.title.toLowerCase().includes(query.toLowerCase())
-  );
+  // YouTube Music search results formatted
+  const formattedYtmTracks = useMemo(() => {
+    return (ytmResults || []).map((t) => ({
+      id: `ytm-${t.id || t.videoId}`,
+      title: t.title,
+      subtitle: `${t.artist_name || t.artist} • ${t.duration || 'Song'}`,
+      category: 'YouTube Music',
+      icon: Radio,
+      cover: t.cover_url || t.cover,
+      track: t,
+      run: () => playTrack(t),
+    }));
+  }, [ytmResults, playTrack]);
 
-  const allItems = [...filteredTracks, ...filteredActions];
+  const filteredActions = useMemo(() => {
+    if (!query.trim()) return actions;
+    return actions.filter((a) =>
+      a.title.toLowerCase().includes(query.toLowerCase()) ||
+      a.category.toLowerCase().includes(query.toLowerCase())
+    );
+  }, [query, actions]);
+
+  const allItems = useMemo(() => {
+    if (!query.trim()) {
+      return actions;
+    }
+    return [...formattedYtmTracks, ...filteredCatalogTracks, ...filteredActions];
+  }, [query, formattedYtmTracks, filteredCatalogTracks, filteredActions, actions]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
@@ -154,12 +226,12 @@ export default function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/80 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-20 px-4 bg-black/80 backdrop-blur-md animate-fade-in text-white"
       onClick={() => setIsCommandPaletteOpen(false)}
     >
       <div
-        className="w-full max-w-xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden text-white"
-        style={{ background: 'rgba(20, 22, 28, 0.98)', backdropFilter: 'blur(30px)' }}
+        className="w-full max-w-xl rounded-3xl border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden"
+        style={{ background: 'rgba(16, 18, 24, 0.98)', backdropFilter: 'blur(30px)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search header */}
@@ -174,10 +246,15 @@ export default function CommandPalette() {
               setSelectedIndex(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Type a song, artist, command, or mode... (Esc to exit)"
+            placeholder="Search YouTube Music, songs, artists, or audio effects..."
             className="w-full bg-transparent text-sm text-white placeholder-white/40 outline-none"
           />
-          <span className="text-[10px] font-mono text-white/50 bg-white/10 px-2 py-0.5 rounded">
+          {isYtmLoading && (
+            <span className="text-[10px] text-white/50 animate-pulse font-mono shrink-0">
+              Searching...
+            </span>
+          )}
+          <span className="text-[10px] font-mono text-white/50 bg-white/10 px-2 py-0.5 rounded shrink-0">
             ESC
           </span>
         </div>
@@ -185,8 +262,8 @@ export default function CommandPalette() {
         {/* Results list */}
         <div className="max-h-96 overflow-y-auto p-2 space-y-1">
           {allItems.length === 0 ? (
-            <div className="py-8 text-center text-white/30 text-xs">
-              No matching commands or songs found.
+            <div className="py-12 text-center text-white/30 text-xs">
+              No matching songs or commands found for &quot;{query}&quot;.
             </div>
           ) : (
             allItems.map((item, idx) => {
@@ -205,13 +282,23 @@ export default function CommandPalette() {
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                        isSelected ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'bg-white/10 text-white/60'
-                      }`}
-                    >
-                      <ItemIcon size={14} />
-                    </div>
+                    {item.cover ? (
+                      <img
+                        src={item.cover}
+                        alt={item.title}
+                        className="w-8 h-8 rounded-lg object-cover shadow-sm shrink-0"
+                      />
+                    ) : (
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                          isSelected
+                            ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.3)]'
+                            : 'bg-white/10 text-white/60'
+                        }`}
+                      >
+                        <ItemIcon size={14} />
+                      </div>
+                    )}
                     <div className="truncate">
                       <p className="text-xs font-semibold truncate">{item.title}</p>
                       {item.subtitle && (
@@ -219,7 +306,7 @@ export default function CommandPalette() {
                       )}
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono uppercase text-white/30 shrink-0 ml-2">
+                  <span className="text-[9px] font-mono uppercase text-white/40 shrink-0 ml-2 bg-white/5 px-2 py-0.5 rounded border border-white/5">
                     {item.category}
                   </span>
                 </div>
@@ -229,9 +316,21 @@ export default function CommandPalette() {
         </div>
 
         {/* Footer shortcuts */}
-        <div className="px-4 py-2 border-t border-white/10 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/40">
-          <span>Navigate with ↑ ↓</span>
-          <span>Press Enter to select</span>
+        <div className="px-4 py-2.5 border-t border-white/10 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/40">
+          <div className="flex items-center gap-3">
+            <span>↑ ↓ to navigate</span>
+            <span>↵ to select & play</span>
+          </div>
+          <button
+            onClick={() => {
+              setActiveTab('search');
+              setIsCommandPaletteOpen(false);
+            }}
+            className="flex items-center gap-1 hover:text-white transition-colors"
+          >
+            <span>Open Full Search</span>
+            <ExternalLink size={11} />
+          </button>
         </div>
       </div>
     </div>

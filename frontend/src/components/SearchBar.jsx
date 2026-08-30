@@ -1,6 +1,6 @@
 import { Sparkles, X } from 'lucide-react';
 
-export default function SearchBar({ value, onChange, onClear, placeholder = 'Search songs, artists, moods...' }) {
+export default function SearchBar({ value, onChange, onClear, placeholder = 'Search songs, artists, moods...', autoFocus = false, inputRef }) {
   return (
     <div className="relative w-full">
       <Sparkles
@@ -8,8 +8,10 @@ export default function SearchBar({ value, onChange, onClear, placeholder = 'Sea
         className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 pointer-events-none"
       />
       <input
+        ref={inputRef}
         type="text"
         value={value}
+        autoFocus={autoFocus}
         onChange={(e) => onChange?.(e.target.value)}
         onKeyDown={(e) => e.key === 'Escape' && onClear?.()}
         placeholder={placeholder}

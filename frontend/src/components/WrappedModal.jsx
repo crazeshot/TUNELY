@@ -30,7 +30,13 @@ export default function WrappedModal() {
     const combined = [];
     const seenIds = new Set();
 
-    // 1. Add tracks from current live session history
+    // 1. Current playing track always prioritized first
+    if (currentTrack && currentTrack.id) {
+      seenIds.add(currentTrack.id);
+      combined.push(currentTrack);
+    }
+
+    // 2. Add tracks from current live session history
     for (const t of history) {
       if (t && t.id && !seenIds.has(t.id)) {
         seenIds.add(t.id);
@@ -38,7 +44,7 @@ export default function WrappedModal() {
       }
     }
 
-    // 2. Add liked tracks
+    // 3. Add liked tracks
     for (const t of allTracks) {
       if (t && likedTrackIds.has(t.id) && !seenIds.has(t.id)) {
         seenIds.add(t.id);
@@ -46,7 +52,7 @@ export default function WrappedModal() {
       }
     }
 
-    // 3. Add backend top tracks fallback
+    // 4. Add backend top tracks fallback
     if (backendWrapped?.top_tracks) {
       for (const t of backendWrapped.top_tracks) {
         if (t && t.id && !seenIds.has(t.id)) {
@@ -56,7 +62,7 @@ export default function WrappedModal() {
       }
     }
 
-    // 4. Final fallback to allTracks
+    // 5. Final fallback to allTracks
     for (const t of allTracks) {
       if (t && !seenIds.has(t.id)) {
         seenIds.add(t.id);
@@ -65,7 +71,7 @@ export default function WrappedModal() {
     }
 
     return combined.slice(0, 5);
-  }, [history, likedTrackIds, backendWrapped]);
+  }, [currentTrack, history, likedTrackIds, backendWrapped]);
 
   // Real-time Sonic Personality Archetype derived from active genres
   const livePersonality = useMemo(() => {

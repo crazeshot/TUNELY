@@ -1,21 +1,20 @@
 import { useState } from 'react';
 import { ChevronLeft, Plus, Music, Library, Heart, Radio, Sparkles, Users, Trophy, Settings, Search } from 'lucide-react';
-import PlayerBar from './PlayerBar';
 import CreatePlaylistModal from './CreatePlaylistModal';
 import { usePlayer } from '../context/usePlayer';
 import { useAuth } from '../context/useAuth';
 
 export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
-  const { playlists, activeTab, setActiveTab, likedTrackIds, setIsGroupSessionOpen } = usePlayer();
+  const { playlists, activeTab, setActiveTab, likedTrackIds, setIsGroupSessionOpen, setActivePlaylistModal } = usePlayer();
   const { setIsWrappedOpen } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const panelWidth = collapsed ? '64px' : '280px';
+  const panelWidth = collapsed ? '72px' : '260px';
 
   return (
     <>
       <aside
-        className="relative flex flex-col shrink-0 rounded-3xl overflow-hidden transition-all duration-300 bg-white/[0.03] backdrop-blur-2xl bg-gradient-to-br from-white/10 via-white/[0.04] to-transparent border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
+        className="relative flex flex-col flex-1 min-h-0 shrink-0 rounded-3xl overflow-hidden transition-all duration-300 bg-white/[0.03] backdrop-blur-2xl bg-gradient-to-br from-white/10 via-white/[0.04] to-transparent border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
         style={{ width: panelWidth }}
       >
         {/* Collapse toggle button */}
@@ -152,7 +151,7 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
             {playlists.map((pl) => (
               <button
                 key={pl.id}
-                onClick={() => setActiveTab('library')}
+                onClick={() => setActivePlaylistModal(pl)}
                 className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs text-white/70 hover:text-white hover:bg-white/5 text-left truncate transition-colors group"
               >
                 <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/20 transition-colors">
@@ -181,11 +180,6 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
               <Plus size={15} />
               <span>New Playlist</span>
             </button>
-          </div>
-
-          {/* Player bar pinned to bottom */}
-          <div className="px-3 pb-3">
-            <PlayerBar />
           </div>
         </div>
       </aside>

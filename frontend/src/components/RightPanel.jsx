@@ -1,12 +1,11 @@
-import { ChevronRight, Trash2, ListMusic, Sparkles, LogIn, LogOut } from 'lucide-react';
+import { ChevronRight, Trash2, ListMusic, Music, Disc } from 'lucide-react';
 import QueueItem from './QueueItem';
 import { usePlayer } from '../context/usePlayer';
-import { useAuth } from '../context/useAuth';
+import AudioCanvasVisualizer from './AudioCanvasVisualizer';
 
 export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
-  const { queue, clearQueue, currentTrack } = usePlayer();
-  const { user, isLoggedIn, logout, setIsAuthModalOpen } = useAuth();
-  const panelWidth = collapsed ? '64px' : '280px';
+  const { queue, clearQueue, currentTrack, isPlaying } = usePlayer();
+  const panelWidth = collapsed ? '72px' : '260px';
 
   return (
     <aside
@@ -32,69 +31,25 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
       <div
         aria-hidden={collapsed}
         className={`
-          flex flex-col h-full pt-6
+          flex flex-col h-full pt-5
           transition-all duration-300
           ${collapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}
         `}
       >
-        {/* User profile block */}
-        <div className="flex flex-col items-center pb-4 px-4 border-b border-white/10">
-          <div className="relative mb-2">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl p-0.5 bg-white/20 border border-white/40">
-              <img
-                src={user.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
-                alt={user.display_name || user.username}
-                className="w-full h-full rounded-full object-cover"
-              />
-            </div>
-            {/* Online status indicator */}
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-[#12141a] shadow-sm" />
-          </div>
-
-          <div className="flex items-center gap-1.5 text-center">
-            <p className="text-white text-xs font-bold tracking-tight truncate max-w-[160px]" style={{ fontFamily: "'gg sans', sans-serif" }}>
-              {user.display_name || user.username || 'Alex Morgan'}
-            </p>
-            <Sparkles size={12} className="text-white shrink-0" />
-          </div>
-          <span className="text-[10px] text-white/40 mb-2">
-            {isLoggedIn ? 'Audiophile • Member' : 'Guest Listener'} • {user.total_minutes_listened || 1420}m
-          </span>
-
-          {/* Auth Button */}
-          {isLoggedIn ? (
-            <button
-              onClick={logout}
-              className="flex items-center gap-1 text-[11px] text-white/40 hover:text-red-400 transition-colors"
-            >
-              <LogOut size={11} />
-              <span>Sign Out</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-neutral-200 text-black text-[11px] font-bold shadow-[0_0_15px_rgba(255,255,255,0.25)] transition-all"
-            >
-              <LogIn size={11} />
-              <span>Sign In / Register</span>
-            </button>
-          )}
-        </div>
-
         {/* Next Queue Header with count and clear button */}
-        <div className="flex items-center justify-between px-5 pt-3 pb-2">
-          <div className="flex items-center gap-2">
-            <ListMusic size={15} className="text-white" />
+        <div className="flex items-center justify-between px-5 pb-3 border-b border-white/10">
+          <div className="flex items-center gap-2 pl-7">
+            <ListMusic size={16} className="text-white" />
             <h3
-              className="text-white font-bold text-xs tracking-tight"
+              className="text-white font-bold text-sm tracking-tight"
               style={{ fontFamily: "'gg sans', sans-serif" }}
             >
-              Next Queue
+              Up Next Queue
             </h3>
           </div>
           {queue.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-white/60 font-mono bg-white/10 px-2 py-0.5 rounded-full">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-white/70 font-mono bg-white/10 px-2 py-0.5 rounded-full">
                 {queue.length}
               </span>
               <button
@@ -108,33 +63,55 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
           )}
         </div>
 
+        {/* Live Audio Visualizer Mini Wave */}
+        {isPlaying && (
+          <div className="px-4 py-2 opacity-50 pointer-events-none">
+            <AudioCanvasVisualizer mode="bars" height={36} />
+          </div>
+        )}
+
         {/* Queue list */}
-        <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-1">
+        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
           {queue.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-44 text-center px-4 text-white/30">
-              <ListMusic size={28} className="mb-2 opacity-40" />
-              <p className="text-xs font-medium">Queue is empty</p>
-              <p className="text-[10px] text-white/20 mt-1">
-                Hover over songs to add them to your queue
-              </p>
+            <div className="flex flex-col items-center justify-center h-56 text-center px-4 text-white/30 space-y-2">
+              <div className="w-11 h-11 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
+                <Music size={20} className="opacity-40" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-white/60">Queue is currently empty</p>
+                <p className="text-[10px] text-white/30 mt-0.5">
+                  Hover over any song and click &quot;Add to Queue&quot; to line up music
+                </p>
+              </div>
             </div>
           ) : (
             queue.map((track, i) => <QueueItem key={`${track.id}-${i}`} track={track} index={i} />)
           )}
         </div>
 
-        {/* Mini Now Playing card footer */}
+        {/* Now Streaming Mini Card Footer */}
         {currentTrack && (
-          <div className="p-3 border-t border-white/10 bg-white/[0.02]">
-            <div className="flex items-center gap-2.5">
-              <img
-                src={currentTrack.cover_url || currentTrack.cover}
-                alt={currentTrack.title}
-                className="w-8 h-8 rounded-lg object-cover shadow-md"
-              />
+          <div className="p-3.5 border-t border-white/10 bg-white/[0.03]">
+            <div className="flex items-center gap-3">
+              <div className="relative shrink-0">
+                <img
+                  src={currentTrack.cover_url || currentTrack.cover}
+                  alt={currentTrack.title}
+                  className="w-10 h-10 rounded-xl object-cover shadow-md ring-1 ring-white/20"
+                />
+                {isPlaying && (
+                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-black animate-pulse" />
+                )}
+              </div>
               <div className="flex-1 min-w-0">
-                <span className="text-[10px] uppercase font-semibold text-white/70">Now Streaming</span>
-                <p className="text-white text-xs font-semibold truncate">{currentTrack.title}</p>
+                <div className="flex items-center gap-1">
+                  <Disc size={10} className="text-white/60" />
+                  <span className="text-[9px] uppercase tracking-wider font-bold text-white/60">
+                    Now Playing
+                  </span>
+                </div>
+                <p className="text-white text-xs font-bold truncate mt-0.5">{currentTrack.title}</p>
+                <p className="text-[11px] text-white/50 truncate">{currentTrack.artist_name || currentTrack.artist}</p>
               </div>
             </div>
           </div>

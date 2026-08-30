@@ -12,6 +12,7 @@ import { PlayerProvider } from './context/PlayerContext';
 import { AuthProvider } from './context/AuthContext';
 import { usePlayer } from './context/usePlayer';
 import Sidebar from './components/Sidebar';
+import PlayerBar from './components/PlayerBar';
 import MainContent from './components/MainContent';
 import RightPanel from './components/RightPanel';
 import LiquidEther from './LiquidEther';
@@ -25,6 +26,7 @@ import ShareModal from './components/ShareModal';
 import AuthModal from './components/AuthModal';
 import GroupSessionModal from './components/GroupSessionModal';
 import WrappedModal from './components/WrappedModal';
+import PlaylistModal from './components/PlaylistModal';
 import UniversalReactPlayer from './components/UniversalReactPlayer';
 
 function AppLayout() {
@@ -164,10 +166,14 @@ function AppLayout() {
 
       {/* Main 3-Column Glass Layout */}
       <div className="relative z-10 flex h-full gap-2.5 p-3">
-        <Sidebar
-          collapsed={leftCollapsed}
-          onToggle={() => setLeftCollapsed((v) => !v)}
-        />
+        {/* Left Column: Collapsible Navigation + Independent Visible Player */}
+        <div className="flex flex-col gap-2.5 h-full shrink-0 min-h-0">
+          <Sidebar
+            collapsed={leftCollapsed}
+            onToggle={() => setLeftCollapsed((v) => !v)}
+          />
+          <PlayerBar collapsed={leftCollapsed} />
+        </div>
         <MainContent />
         <RightPanel
           collapsed={rightCollapsed}
@@ -186,6 +192,7 @@ function AppLayout() {
       <AuthModal />
       <GroupSessionModal />
       <WrappedModal />
+      <PlaylistModal />
       <UniversalReactPlayer showVideo={false} />
     </div>
   );
