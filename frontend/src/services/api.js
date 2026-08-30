@@ -330,4 +330,17 @@ export const api = {
       return null;
     }
   },
+
+  // Aliases for seamless casing compatibility
+  searchYtm(query, limit) {
+    return this.searchYTM(query, limit);
+  },
+
+  getYtmTrending() {
+    return this.getYTMTrending();
+  },
+
+  getYtmLyrics(videoId) {
+    return this.getYTMLyrics(videoId);
+  },
 };
