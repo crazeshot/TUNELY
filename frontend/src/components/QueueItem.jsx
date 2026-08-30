@@ -7,7 +7,11 @@ export default function QueueItem({ track, index }) {
   const { playTrack, togglePlay, removeFromQueue, currentTrack, isPlaying } = usePlayer();
   const [contextMenuPos, setContextMenuPos] = useState(null);
 
-  const isCurrent = currentTrack?.id === track.id;
+  if (!track) return null;
+
+  const isCurrent = (currentTrack?.videoId && track?.videoId)
+    ? currentTrack.videoId === track.videoId
+    : (currentTrack?.id !== undefined && track?.id !== undefined && currentTrack.id === track.id);
 
   const handleRowClick = () => {
     if (isCurrent) {

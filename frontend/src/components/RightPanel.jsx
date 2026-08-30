@@ -1,4 +1,4 @@
-import { ChevronRight, Trash2, ListMusic, Music, Sparkles, RefreshCw } from 'lucide-react';
+import { ChevronRight, Trash2, ListMusic, Music, Sparkles, RefreshCw, Disc } from 'lucide-react';
 import QueueItem from './QueueItem';
 import { usePlayer } from '../context/usePlayer';
 import AudioCanvasVisualizer from './AudioCanvasVisualizer';
@@ -102,7 +102,9 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
               )}
             </div>
           ) : (
-            queue.map((track, i) => <QueueItem key={`${track.id || track.videoId}-${i}`} track={track} index={i} />)
+            queue.filter(Boolean).map((track, i) => (
+              <QueueItem key={track.videoId || track.id || `queue-item-${i}`} track={track} index={i} />
+            ))
           )}
         </div>
 
