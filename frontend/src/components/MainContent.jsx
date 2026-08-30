@@ -326,8 +326,12 @@ export default function MainContent() {
                       className="p-4 rounded-2xl bg-white/[0.04] hover:bg-white/10 border border-white/10 cursor-pointer transition-all hover:scale-102 group flex items-center gap-3.5"
                     >
                       <img
-                        src={mix.cover_url}
+                        src={mix.cover_url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'}
                         alt={mix.title}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+                        }}
                         className="w-14 h-14 rounded-xl object-cover shadow-md group-hover:ring-2 group-hover:ring-white/40"
                       />
                       <div className="min-w-0 flex-1">
@@ -575,6 +579,10 @@ export default function MainContent() {
                     <img
                       src={pl.cover_url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'}
                       alt={pl.title}
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+                      }}
                       className="w-full aspect-video object-cover rounded-xl mb-3 group-hover:scale-102 transition-transform"
                     />
                     <h4 className="text-sm font-bold text-white truncate">{pl.title}</h4>

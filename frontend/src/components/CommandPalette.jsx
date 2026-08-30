@@ -286,6 +286,10 @@ export default function CommandPalette() {
                       <img
                         src={item.cover}
                         alt={item.title}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+                        }}
                         className="w-8 h-8 rounded-lg object-cover shadow-sm shrink-0"
                       />
                     ) : (

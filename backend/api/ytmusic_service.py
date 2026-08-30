@@ -80,6 +80,18 @@ class YTMusicService:
 
         return True
 
+    def _get_cover_url(self, item, video_id):
+        thumbnails = item.get('thumbnails', [])
+        if thumbnails:
+            url = thumbnails[-1].get('url', '')
+            if url.startswith('//'):
+                url = 'https:' + url
+            if url:
+                return url
+        if video_id:
+            return f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
+        return 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'
+
     def search_youtube_videos(self, query, limit=16):
         """
         Search for pure songs only.
@@ -100,20 +112,17 @@ class YTMusicService:
         # 1. Primary: Official YouTube Music Songs Filter
         tracks = self.search_tracks(query, limit=limit)
 
-        # 2. If needed, supplement with VideosSearch filtered strictly for songs
-        if len(tracks) < limit:
+        # 2. Fallback to clean youtube-search-python if needed
+        if len(tracks) < 6:
             try:
                 from youtubesearchpython import VideosSearch
                 search_query = f"{query} song audio"
-                videos_search = VideosSearch(search_query, limit=limit * 2)
-                result_data = videos_search.result()
-                items = result_data.get('result', [])
+                vs = VideosSearch(search_query, limit=limit * 2)
+                raw_results = vs.result().get('result', [])
 
-                existing_ids = {t['videoId'] for t in tracks}
-
-                for item in items:
+                for item in raw_results:
                     video_id = item.get('id')
-                    if not video_id or video_id in existing_ids:
+                    if not video_id or any(t.get('videoId') == video_id for t in tracks):
                         continue
 
                     title = item.get('title', 'Unknown Title')
@@ -127,8 +136,7 @@ class YTMusicService:
                     channel = item.get('channel', {})
                     artist_name = channel.get('name', 'YouTube Artist') if isinstance(channel, dict) else 'YouTube Artist'
 
-                    thumbnails = item.get('thumbnails', [])
-                    cover_url = thumbnails[-1].get('url') if thumbnails else 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600'
+                    cover_url = self._get_cover_url(item, video_id)
 
                     view_count = ''
                     if isinstance(item.get('viewCount'), dict):
@@ -139,7 +147,9 @@ class YTMusicService:
                         'videoId': video_id,
                         'title': title,
                         'artist_name': artist_name,
+                        'artist': artist_name,
                         'cover_url': cover_url,
+                        'cover': cover_url,
                         'duration': duration_str,
                         'duration_seconds': duration_seconds,
                         'genre': 'YouTube Music',
@@ -189,10 +199,7 @@ class YTMusicService:
                 artist_name = artists[0]['name'] if artists else 'Unknown Artist'
                 artist_id = artists[0]['id'] if artists and 'id' in artists[0] else ''
 
-                thumbnails = item.get('thumbnails', [])
-                cover_url = thumbnails[-1]['url'] if thumbnails else 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600'
-                if cover_url.startswith('//'):
-                    cover_url = 'https:' + cover_url
+                cover_url = self._get_cover_url(item, video_id)
 
                 album = item.get('album', {})
                 album_title = album.get('name') if album else ''
@@ -202,9 +209,11 @@ class YTMusicService:
                     'videoId': video_id,
                     'title': title,
                     'artist_name': artist_name,
+                    'artist': artist_name,
                     'artist_id': artist_id,
                     'album_title': album_title,
                     'cover_url': cover_url,
+                    'cover': cover_url,
                     'duration': duration_str,
                     'duration_seconds': duration_seconds,
                     'genre': 'YouTube Music',
@@ -241,15 +250,16 @@ class YTMusicService:
                 artists = item.get('artists', [])
                 artist_name = artists[0]['name'] if artists else 'Top Artist'
 
-                thumbnails = item.get('thumbnails', [])
-                cover_url = thumbnails[-1]['url'] if thumbnails else 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600'
+                cover_url = self._get_cover_url(item, video_id)
 
                 tracks.append({
                     'id': f"ytm-{video_id}",
                     'videoId': video_id,
                     'title': title,
                     'artist_name': artist_name,
+                    'artist': artist_name,
                     'cover_url': cover_url,
+                    'cover': cover_url,
                     'duration': '3:30',
                     'duration_seconds': 210,
                     'genre': 'Top Charts',

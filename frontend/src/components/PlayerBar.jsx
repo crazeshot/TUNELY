@@ -99,8 +99,16 @@ export default function PlayerBar({ collapsed = false }) {
           title={`${currentTrack.title} - ${currentTrack.artist_name || currentTrack.artist}`}
         >
           <img
-            src={currentTrack.cover_url || currentTrack.cover}
+            src={currentTrack.cover_url || currentTrack.cover || (currentTrack.videoId ? `https://i.ytimg.com/vi/${currentTrack.videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80')}
             alt={currentTrack.title}
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              if (currentTrack.videoId && !e.currentTarget.src.includes('i.ytimg.com')) {
+                e.currentTarget.src = `https://i.ytimg.com/vi/${currentTrack.videoId}/hqdefault.jpg`;
+              } else {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+              }
+            }}
             className="w-full h-full object-cover group-hover/cover:scale-105 transition-transform"
           />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/cover:opacity-100 flex items-center justify-center transition-opacity">
@@ -185,8 +193,16 @@ export default function PlayerBar({ collapsed = false }) {
           style={{ width: '62px', height: '62px' }}
         >
           <img
-            src={currentTrack.cover_url || currentTrack.cover}
+            src={currentTrack.cover_url || currentTrack.cover || (currentTrack.videoId ? `https://i.ytimg.com/vi/${currentTrack.videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80')}
             alt={currentTrack.title}
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              if (currentTrack.videoId && !e.currentTarget.src.includes('i.ytimg.com')) {
+                e.currentTarget.src = `https://i.ytimg.com/vi/${currentTrack.videoId}/hqdefault.jpg`;
+              } else {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+              }
+            }}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">

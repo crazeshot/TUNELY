@@ -42,8 +42,17 @@ export default function AlbumCard({ track, delay = 0 }) {
       >
         {/* Album Cover */}
         <img
-          src={track.cover_url || track.cover}
+          src={track.cover_url || track.cover || (track.videoId ? `https://i.ytimg.com/vi/${track.videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80')}
           alt={track.title}
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          onError={(e) => {
+            if (track.videoId && !e.currentTarget.src.includes('i.ytimg.com')) {
+              e.currentTarget.src = `https://i.ytimg.com/vi/${track.videoId}/hqdefault.jpg`;
+            } else {
+              e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+            }
+          }}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
 

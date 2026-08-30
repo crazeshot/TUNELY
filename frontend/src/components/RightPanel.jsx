@@ -95,8 +95,16 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
             <div className="flex items-center gap-3">
               <div className="relative shrink-0">
                 <img
-                  src={currentTrack.cover_url || currentTrack.cover}
+                  src={currentTrack.cover_url || currentTrack.cover || (currentTrack.videoId ? `https://i.ytimg.com/vi/${currentTrack.videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80')}
                   alt={currentTrack.title}
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    if (currentTrack.videoId && !e.currentTarget.src.includes('i.ytimg.com')) {
+                      e.currentTarget.src = `https://i.ytimg.com/vi/${currentTrack.videoId}/hqdefault.jpg`;
+                    } else {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+                    }
+                  }}
                   className="w-10 h-10 rounded-xl object-cover shadow-md ring-1 ring-white/20"
                 />
                 {isPlaying && (

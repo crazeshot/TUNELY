@@ -34,8 +34,16 @@ export default function QueueItem({ track, index }) {
         {/* Track Number / Waveform / Circular Thumbnail */}
         <div className="relative shrink-0 w-9 h-9">
           <img
-            src={track.cover_url || track.cover}
+            src={track.cover_url || track.cover || (track.videoId ? `https://i.ytimg.com/vi/${track.videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80')}
             alt={track.title}
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              if (track.videoId && !e.currentTarget.src.includes('i.ytimg.com')) {
+                e.currentTarget.src = `https://i.ytimg.com/vi/${track.videoId}/hqdefault.jpg`;
+              } else {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+              }
+            }}
             className="w-9 h-9 rounded-full object-cover shadow-sm"
           />
 

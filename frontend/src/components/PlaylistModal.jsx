@@ -39,6 +39,10 @@ export default function PlaylistModal() {
             <img
               src={activePlaylistModal.cover_url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'}
               alt={activePlaylistModal.title}
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+              }}
               className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover shadow-2xl ring-1 ring-white/20 shrink-0"
             />
             <div>
@@ -145,8 +149,16 @@ export default function PlaylistModal() {
                       #{idx + 1}
                     </span>
                     <img
-                      src={t.cover_url || t.cover || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'}
+                      src={t.cover_url || t.cover || (t.videoId ? `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80')}
                       alt={t.title}
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        if (t.videoId && !e.currentTarget.src.includes('i.ytimg.com')) {
+                          e.currentTarget.src = `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg`;
+                        } else {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+                        }
+                      }}
                       className="w-10 h-10 rounded-xl object-cover shadow-sm shrink-0"
                     />
                     <div className="truncate">
