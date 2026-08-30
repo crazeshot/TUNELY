@@ -10,7 +10,7 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
 
   return (
     <aside
-      className="relative flex flex-col rounded-3xl overflow-hidden shrink-0 transition-all duration-300 bg-white/[0.04] backdrop-blur-2xl bg-gradient-to-br from-white/10 via-white/5 to-white/[0.01] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.45)]"
+      className="relative flex flex-col rounded-3xl overflow-hidden shrink-0 transition-all duration-300 bg-white/[0.03] backdrop-blur-2xl bg-gradient-to-br from-white/10 via-white/[0.04] to-transparent border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
       style={{ width: panelWidth }}
     >
       {/* Collapse toggle button */}
@@ -40,12 +40,7 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
         {/* User profile block */}
         <div className="flex flex-col items-center pb-4 px-4 border-b border-white/10">
           <div className="relative mb-2">
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl p-0.5"
-              style={{
-                background: 'linear-gradient(135deg, rgba(224, 82, 154, 0.8), rgba(82, 39, 255, 0.8))',
-              }}
-            >
+            <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl p-0.5 bg-white/20 border border-white/40">
               <img
                 src={user.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
                 alt={user.display_name || user.username}
@@ -53,17 +48,17 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
               />
             </div>
             {/* Online status indicator */}
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-[#160824] shadow-sm" />
+            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-[#12141a] shadow-sm" />
           </div>
 
           <div className="flex items-center gap-1.5 text-center">
             <p className="text-white text-xs font-bold tracking-tight truncate max-w-[160px]" style={{ fontFamily: 'Syne, sans-serif' }}>
               {user.display_name || user.username || 'Alex Morgan'}
             </p>
-            <Sparkles size={12} className="text-pink-400 shrink-0" />
+            <Sparkles size={12} className="text-white shrink-0" />
           </div>
           <span className="text-[10px] text-white/40 mb-2">
-            {isLoggedIn ? 'Audiophile • Premium' : 'Guest Listener'} • {user.total_minutes_listened || 1420}m
+            {isLoggedIn ? 'Audiophile • Member' : 'Guest Listener'} • {user.total_minutes_listened || 1420}m
           </span>
 
           {/* Auth Button */}
@@ -78,7 +73,7 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
           ) : (
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-semibold text-pink-300 transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-neutral-200 text-black text-[11px] font-bold shadow-[0_0_15px_rgba(255,255,255,0.25)] transition-all"
             >
               <LogIn size={11} />
               <span>Sign In / Register</span>
@@ -89,7 +84,7 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
         {/* Next Queue Header with count and clear button */}
         <div className="flex items-center justify-between px-5 pt-3 pb-2">
           <div className="flex items-center gap-2">
-            <ListMusic size={15} className="text-pink-400" />
+            <ListMusic size={15} className="text-white" />
             <h3
               className="text-white font-bold text-xs tracking-tight"
               style={{ fontFamily: 'Syne, sans-serif' }}
@@ -99,7 +94,7 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
           </div>
           {queue.length > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-white/40 font-mono bg-white/5 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] text-white/60 font-mono bg-white/10 px-2 py-0.5 rounded-full">
                 {queue.length}
               </span>
               <button
@@ -138,7 +133,7 @@ export default function RightPanel({ collapsed = false, onToggle = () => {} }) {
                 className="w-8 h-8 rounded-lg object-cover shadow-md"
               />
               <div className="flex-1 min-w-0">
-                <span className="text-[10px] uppercase font-semibold text-pink-400">Now Streaming</span>
+                <span className="text-[10px] uppercase font-semibold text-white/70">Now Streaming</span>
                 <p className="text-white text-xs font-semibold truncate">{currentTrack.title}</p>
               </div>
             </div>

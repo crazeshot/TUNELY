@@ -1,4 +1,4 @@
-import { X, Play, BadgeCheck, Music, Users } from 'lucide-react';
+import { X, Play, BadgeCheck, Users } from 'lucide-react';
 import { usePlayer } from '../context/usePlayer';
 import { allTracks } from '../data/musicData';
 
@@ -23,13 +23,13 @@ export default function ArtistModal() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-lg animate-fade-in text-white"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-lg animate-fade-in text-white"
       onClick={() => setActiveArtistModal(null)}
     >
       <div
         className="relative w-full max-w-2xl max-h-[90vh] rounded-3xl border border-white/20 shadow-2xl overflow-hidden flex flex-col"
         style={{
-          background: 'linear-gradient(135deg, rgba(26, 12, 38, 0.98) 0%, rgba(12, 6, 20, 0.98) 100%)',
+          background: 'linear-gradient(135deg, rgba(22, 24, 30, 0.98) 0%, rgba(10, 11, 15, 0.98) 100%)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -40,7 +40,7 @@ export default function ArtistModal() {
             alt={artistName}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#1a0c26] via-[#1a0c26]/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#16181e] via-[#16181e]/60 to-transparent" />
 
           {/* Close button */}
           <button
@@ -54,10 +54,10 @@ export default function ArtistModal() {
           <div className="absolute bottom-5 left-6 right-6 flex items-end justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[11px] uppercase tracking-wider font-semibold text-pink-400">
+                <span className="text-[11px] uppercase tracking-wider font-semibold text-white/80">
                   Verified Artist
                 </span>
-                <BadgeCheck size={16} className="text-pink-400 fill-pink-400/20" />
+                <BadgeCheck size={16} className="text-white fill-white/20" />
               </div>
               <h2 className="text-2xl sm:text-4xl font-extrabold" style={{ fontFamily: 'Syne, sans-serif' }}>
                 {artistName}
@@ -71,9 +71,9 @@ export default function ArtistModal() {
             {artistTracks.length > 0 && (
               <button
                 onClick={() => playTrack(artistTracks[0])}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white text-xs font-semibold shadow-xl hover:scale-105 transition-all"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-neutral-200 text-black text-xs font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 transition-all"
               >
-                <Play size={14} className="fill-white" />
+                <Play size={14} className="fill-black" />
                 <span>Play Discography</span>
               </button>
             )}
@@ -128,7 +128,7 @@ export default function ArtistModal() {
                           e.stopPropagation();
                           addToQueue(t);
                         }}
-                        className="opacity-0 group-hover:opacity-100 text-xs px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/80 transition-all"
+                        className="opacity-0 group-hover:opacity-100 text-xs px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
                       >
                         + Queue
                       </button>

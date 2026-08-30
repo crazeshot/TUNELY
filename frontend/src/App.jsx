@@ -125,12 +125,12 @@ function AppLayout() {
   ]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden select-none" style={{ background: '#0e0514' }}>
+    <div className="relative w-full h-full overflow-hidden select-none" style={{ background: '#090a0f' }}>
       {/* Animated Three.js Liquid Ether Shader Ambient Background */}
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-80">
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-60">
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
           <LiquidEther
-            colors={themeColors.gradient || ['#5227FF', '#FF9FFC', '#B19EEF']}
+            colors={themeColors.gradient || ['#0f172a', '#475569', '#cbd5e1']}
             mouseForce={18}
             cursorSize={90}
             isViscous
@@ -149,14 +149,14 @@ function AppLayout() {
         </div>
       </div>
 
-      {/* Dynamic ambient radial lighting overlays tuned to album art */}
+      {/* Dynamic ambient radial lighting overlays tuned to monochromatic theme */}
       <div
         className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none transition-all duration-700"
-        style={{ background: themeColors.primary, opacity: 0.18 }}
+        style={{ background: themeColors.primary || '#ffffff', opacity: 0.12 }}
       />
       <div
         className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none transition-all duration-700"
-        style={{ background: themeColors.secondary, opacity: 0.18 }}
+        style={{ background: themeColors.secondary || '#94a3b8', opacity: 0.12 }}
       />
 
       {/* Main 3-Column Glass Layout */}

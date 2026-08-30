@@ -22,24 +22,24 @@ export default function EqualizerModal() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in text-white"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in text-white"
       onClick={() => setIsEqualizerOpen(false)}
     >
       <div
         className="relative w-full max-w-2xl p-6 sm:p-8 rounded-3xl border border-white/20 shadow-2xl overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, rgba(28, 12, 40, 0.96) 0%, rgba(12, 6, 22, 0.98) 100%)',
+          background: 'linear-gradient(135deg, rgba(22, 24, 30, 0.98) 0%, rgba(10, 11, 15, 0.98) 100%)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-6 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-lg">
-              <Sliders size={20} className="text-white" />
+            <div className="w-10 h-10 rounded-2xl bg-white text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+              <Sliders size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h2 className="text-lg font-bold tracking-wide" style={{ fontFamily: 'Syne, sans-serif' }}>
                 10-Band Graphic Equalizer
               </h2>
               <p className="text-xs text-white/50">Audiophile Web Audio DSP tuning</p>
@@ -60,7 +60,7 @@ export default function EqualizerModal() {
             <span className="text-xs font-semibold uppercase tracking-wider text-white/40">Presets</span>
             <button
               onClick={() => setEqualizerPreset('Flat')}
-              className="flex items-center gap-1.5 text-xs text-pink-400 hover:text-pink-300 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-white hover:text-white/80 font-semibold transition-colors"
             >
               <RotateCcw size={12} />
               <span>Reset to Flat</span>
@@ -72,9 +72,9 @@ export default function EqualizerModal() {
               <button
                 key={p}
                 onClick={() => setEqualizerPreset(p)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                   eqPreset === p
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold shadow-md'
+                    ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
                     : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10'
                 }`}
               >
@@ -90,7 +90,7 @@ export default function EqualizerModal() {
             const gain = eqBands[i] || 0;
             return (
               <div key={freq} className="flex flex-col items-center gap-3">
-                <span className="text-[10px] font-mono text-pink-300/80">
+                <span className="text-[10px] font-mono text-white/80 font-bold">
                   {gain > 0 ? `+${gain}` : `${gain}`}
                 </span>
 

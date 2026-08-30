@@ -140,12 +140,12 @@ export default function VisualizerModal() {
           </div>
 
           {/* Visualizer Mode Tabs */}
-          <div className="flex items-center gap-1 bg-white/10 p-1 rounded-full border border-white/15">
+          <div className="flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/10">
             <button
               onClick={() => setVisualMode('vinyl')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                 visualMode === 'vinyl'
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md'
+                  ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.25)]'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -155,9 +155,9 @@ export default function VisualizerModal() {
 
             <button
               onClick={() => setVisualMode('spectrum')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                 visualMode === 'spectrum'
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md'
+                  ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.25)]'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -167,9 +167,9 @@ export default function VisualizerModal() {
 
             <button
               onClick={() => setVisualMode('wave')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                 visualMode === 'wave'
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md'
+                  ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.25)]'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -179,9 +179,9 @@ export default function VisualizerModal() {
 
             <button
               onClick={() => setVisualMode('video')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                 visualMode === 'video'
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md'
+                  ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.25)]'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -257,9 +257,9 @@ export default function VisualizerModal() {
                           key={idx}
                           ref={isActiveLine ? activeLineRef : null}
                           onClick={() => handleLyricClick(line)}
-                          className={`cursor-pointer transition-all duration-300 select-none py-1 px-2 rounded-xl ${
+                          className={`cursor-pointer transition-all duration-300 select-none py-1.5 px-3 rounded-xl ${
                             isActiveLine
-                              ? 'text-pink-300 font-bold text-base scale-105 drop-shadow-[0_0_15px_rgba(224,82,154,0.9)] bg-pink-500/10'
+                              ? 'text-white font-extrabold text-base scale-105 drop-shadow-[0_0_15px_rgba(255,255,255,0.9)] bg-white/10'
                               : 'text-white/40 hover:text-white/90 hover:bg-white/5'
                           }`}
                           title="Click to jump playback here"
@@ -288,8 +288,8 @@ export default function VisualizerModal() {
                   mode="bars"
                   barCount={48}
                   height={260}
-                  accentColor={themeColors.primary}
-                  secondaryColor={themeColors.secondary}
+                  accentColor="#ffffff"
+                  secondaryColor="#94a3b8"
                 />
               </div>
               <div className="text-center mt-4">
@@ -305,8 +305,8 @@ export default function VisualizerModal() {
                 <AudioCanvasVisualizer
                   mode="wave"
                   height={260}
-                  accentColor={themeColors.primary}
-                  secondaryColor={themeColors.secondary}
+                  accentColor="#ffffff"
+                  secondaryColor="#94a3b8"
                 />
               </div>
               <div className="text-center mt-4">
@@ -335,7 +335,7 @@ export default function VisualizerModal() {
               onClick={toggleSpatialAudio}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                 isSpatialAudio
-                  ? 'bg-blue-600/40 border-blue-400 text-blue-200 shadow-[0_0_15px_rgba(59,130,246,0.4)]'
+                  ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.4)]'
                   : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
               }`}
             >
@@ -347,7 +347,7 @@ export default function VisualizerModal() {
               onClick={toggleSlowedReverb}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                 isSlowedReverb
-                  ? 'bg-purple-600/40 border-purple-400 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.4)]'
+                  ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.4)]'
                   : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
               }`}
             >
@@ -359,7 +359,7 @@ export default function VisualizerModal() {
               onClick={toggleNightcore}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                 isNightcore
-                  ? 'bg-pink-600/40 border-pink-400 text-pink-200 shadow-[0_0_15px_rgba(244,114,182,0.4)]'
+                  ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.4)]'
                   : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
               }`}
             >
@@ -381,7 +381,7 @@ export default function VisualizerModal() {
             <div className="relative group cursor-pointer">
               <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full transition-all duration-100"
+                  className="h-full bg-white rounded-full transition-all duration-100 shadow-[0_0_8px_rgba(255,255,255,0.6)]"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -405,16 +405,16 @@ export default function VisualizerModal() {
             <button
               onClick={() => toggleLike(currentTrack)}
               className={`p-2 rounded-full hover:bg-white/10 transition-colors ${
-                isCurrentTrackLiked ? 'text-pink-400 fill-pink-400' : 'text-white/50'
+                isCurrentTrackLiked ? 'text-white fill-white' : 'text-white/50'
               }`}
             >
-              <Heart size={20} className={isCurrentTrackLiked ? 'fill-pink-400' : ''} />
+              <Heart size={20} className={isCurrentTrackLiked ? 'fill-white' : ''} />
             </button>
 
             <div className="flex items-center gap-6">
               <button
                 onClick={toggleShuffle}
-                className={`p-2 transition-colors ${isShuffle ? 'text-pink-400 font-bold' : 'text-white/40 hover:text-white'}`}
+                className={`p-2 transition-colors ${isShuffle ? 'text-white font-bold' : 'text-white/40 hover:text-white'}`}
               >
                 <Shuffle size={18} />
               </button>
@@ -428,7 +428,7 @@ export default function VisualizerModal() {
 
               <button
                 onClick={togglePlay}
-                className="w-13 h-13 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 flex items-center justify-center text-white shadow-xl hover:scale-105 transition-all duration-200"
+                className="w-13 h-13 rounded-full bg-white hover:bg-neutral-200 flex items-center justify-center text-black shadow-[0_0_20px_rgba(255,255,255,0.4)] hover:scale-105 transition-all duration-200 font-bold"
               >
                 {isPlaying ? <Pause size={22} /> : <Play size={22} className="ml-0.5" />}
               </button>
@@ -442,7 +442,7 @@ export default function VisualizerModal() {
 
               <button
                 onClick={cycleRepeat}
-                className={`p-2 transition-colors ${repeatMode !== 'off' ? 'text-pink-400' : 'text-white/40 hover:text-white'}`}
+                className={`p-2 transition-colors ${repeatMode !== 'off' ? 'text-white font-bold' : 'text-white/40 hover:text-white'}`}
               >
                 <Repeat size={18} />
               </button>

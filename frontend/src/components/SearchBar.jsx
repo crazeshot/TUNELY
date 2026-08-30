@@ -5,7 +5,7 @@ export default function SearchBar({ value, onChange, onClear, placeholder = 'Sea
     <div className="relative w-full">
       <Sparkles
         size={16}
-        className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400 pointer-events-none"
+        className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 pointer-events-none"
       />
       <input
         type="text"
@@ -20,11 +20,11 @@ export default function SearchBar({ value, onChange, onClear, placeholder = 'Sea
           outline-none
           transition-all duration-300
           border border-white/10
-          focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20
+          focus:border-white focus:ring-2 focus:ring-white/20
           shadow-lg
         "
         style={{
-          background: 'rgba(255, 255, 255, 0.07)',
+          background: 'rgba(255, 255, 255, 0.05)',
           backdropFilter: 'blur(16px)',
         }}
       />

@@ -22,41 +22,41 @@ export default function ShareModal() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in text-white"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in text-white"
       onClick={() => setShareTrackModal(null)}
     >
       <div
         className="relative w-full max-w-md p-6 rounded-3xl border border-white/20 shadow-2xl overflow-hidden"
         style={{
-          background: 'rgba(24, 12, 34, 0.96)',
+          background: 'rgba(20, 22, 28, 0.98)',
           backdropFilter: 'blur(24px)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-pink-400" />
-            <h3 className="text-sm font-bold" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <Sparkles size={16} className="text-white" />
+            <h3 className="text-sm font-bold tracking-wide" style={{ fontFamily: 'Syne, sans-serif' }}>
               Share Track
             </h3>
           </div>
           <button
             onClick={() => setShareTrackModal(null)}
-            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white transition-colors"
           >
             <X size={14} />
           </button>
         </div>
 
         {/* Aesthetic Share Preview Card */}
-        <div className="my-5 p-4 rounded-2xl bg-gradient-to-br from-purple-900/40 via-pink-900/30 to-black/60 border border-white/15 flex items-center gap-4 shadow-xl">
+        <div className="my-5 p-4 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center gap-4 shadow-xl">
           <img
             src={track.cover_url || track.cover}
             alt={track.title}
             className="w-16 h-16 rounded-xl object-cover shadow-lg"
           />
           <div className="min-w-0 flex-1">
-            <span className="text-[10px] uppercase font-semibold text-pink-400">Tunely Audio</span>
+            <span className="text-[10px] uppercase font-semibold text-white/70">Tunely Audio</span>
             <p className="text-sm font-bold text-white truncate">{track.title}</p>
             <p className="text-xs text-white/60 truncate">{track.artist_name || track.artist}</p>
           </div>
@@ -70,11 +70,11 @@ export default function ShareModal() {
               type="text"
               readOnly
               value={shareUrl}
-              className="flex-1 px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 text-xs text-white/80 select-all outline-none font-mono"
+              className="flex-1 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white/80 select-all outline-none font-mono"
             />
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white text-xs font-semibold shadow-md transition-all shrink-0"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black text-xs font-bold shadow-[0_0_15px_rgba(255,255,255,0.25)] transition-all shrink-0"
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
               <span>{copied ? 'Copied' : 'Copy'}</span>

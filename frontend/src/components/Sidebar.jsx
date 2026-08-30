@@ -15,7 +15,7 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
   return (
     <>
       <aside
-        className="relative flex flex-col shrink-0 rounded-3xl overflow-hidden transition-all duration-300 bg-white/[0.04] backdrop-blur-2xl bg-gradient-to-br from-white/10 via-white/5 to-white/[0.01] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.45)]"
+        className="relative flex flex-col shrink-0 rounded-3xl overflow-hidden transition-all duration-300 bg-white/[0.03] backdrop-blur-2xl bg-gradient-to-br from-white/10 via-white/[0.04] to-transparent border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
         style={{ width: panelWidth }}
       >
         {/* Collapse toggle button */}
@@ -42,10 +42,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
             ${collapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}
           `}
         >
-          {/* Top: Logo with neon dot */}
+          {/* Top: Logo with monochrome glow */}
           <div className="flex items-center gap-2.5 px-6 pt-6 pb-5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-pink-500/20">
-              <Sparkles size={16} className="text-white" />
+            <div className="w-8 h-8 rounded-xl bg-white text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+              <Sparkles size={16} />
             </div>
             <h1
               className="text-white font-bold tracking-tight text-2xl"
@@ -59,25 +59,25 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
           <div className="px-4 space-y-1 mb-3">
             <button
               onClick={() => setActiveTab('home')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'home'
-                  ? 'bg-white/15 text-white shadow-sm'
+                  ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Radio size={15} className={activeTab === 'home' ? 'text-pink-400' : 'text-white/50'} />
+              <Radio size={15} />
               <span>Explore Music</span>
             </button>
 
             <button
               onClick={() => setActiveTab('library')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'library'
-                  ? 'bg-white/15 text-white shadow-sm'
+                  ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Library size={15} className={activeTab === 'library' ? 'text-pink-400' : 'text-white/50'} />
+              <Library size={15} />
               <span>Your Library</span>
             </button>
 
@@ -86,10 +86,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
               className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
             >
               <span className="flex items-center gap-3">
-                <Heart size={15} className="text-pink-400" />
+                <Heart size={15} className="text-white fill-white/20" />
                 <span>Liked Songs</span>
               </span>
-              <span className="text-[10px] bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full font-mono">
+              <span className="text-[10px] bg-white/10 text-white/90 px-2 py-0.5 rounded-full font-mono">
                 {likedTrackIds.size}
               </span>
             </button>
@@ -97,18 +97,18 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
             {/* Listen Together shortcut */}
             <button
               onClick={() => setIsGroupSessionOpen(true)}
-              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-purple-300 hover:text-white hover:bg-purple-500/10 border border-purple-500/20 transition-all"
+              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 border border-white/10 transition-all"
             >
-              <Users size={15} className="text-purple-400" />
+              <Users size={15} className="text-white/70" />
               <span>Listen Together</span>
             </button>
 
             {/* Tunely Wrapped shortcut */}
             <button
               onClick={() => setIsWrappedOpen(true)}
-              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-pink-300 hover:text-white hover:bg-pink-500/10 border border-pink-500/20 transition-all"
+              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 border border-white/10 transition-all"
             >
-              <Trophy size={15} className="text-pink-400" />
+              <Trophy size={15} className="text-white/70" />
               <span>Tunely Wrapped</span>
             </button>
           </div>
@@ -130,8 +130,8 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
                 onClick={() => setActiveTab('library')}
                 className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs text-white/70 hover:text-white hover:bg-white/5 text-left truncate transition-colors group"
               >
-                <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center shrink-0 group-hover:bg-pink-500/20 transition-colors">
-                  <Music size={12} className="text-white/60 group-hover:text-pink-300" />
+                <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/20 transition-colors">
+                  <Music size={12} className="text-white/60 group-hover:text-white" />
                 </div>
                 <span className="truncate">{pl.title}</span>
               </button>
@@ -144,12 +144,12 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
               onClick={() => setIsModalOpen(true)}
               className="
                 w-full flex items-center justify-center gap-2
-                bg-white/10 hover:bg-white/15
-                border border-white/20 hover:border-pink-500/40
-                text-white/90 hover:text-white
+                bg-white/10 hover:bg-white/20
+                border border-white/20 hover:border-white/40
+                text-white
                 text-xs font-semibold
                 py-2 rounded-2xl
-                shadow-lg hover:shadow-pink-500/10
+                shadow-lg hover:shadow-white/10
                 transition-all duration-200
               "
             >

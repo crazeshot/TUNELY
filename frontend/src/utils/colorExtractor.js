@@ -4,10 +4,10 @@
  */
 
 const DEFAULT_THEME = {
-  primary: '#e0529a',
-  secondary: '#5227FF',
-  glow: 'rgba(224, 82, 154, 0.4)',
-  gradient: ['#5227FF', '#FF9FFC', '#B19EEF'],
+  primary: '#ffffff',
+  secondary: '#94a3b8',
+  glow: 'rgba(255, 255, 255, 0.35)',
+  gradient: ['#0f172a', '#475569', '#f8fafc'],
 };
 
 const cache = new Map();

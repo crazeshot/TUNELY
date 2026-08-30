@@ -35,7 +35,6 @@ export default function MainContent() {
     addToQueue,
     setActiveArtistModal,
     setIsCommandPaletteOpen,
-    themeColors,
   } = usePlayer();
 
   const { setIsWrappedOpen } = useAuth();
@@ -185,9 +184,9 @@ export default function MainContent() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSearchSource('all')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
                 searchSource === 'all'
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md'
+                  ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
                   : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10'
               }`}
             >
@@ -197,13 +196,13 @@ export default function MainContent() {
 
             <button
               onClick={() => setSearchSource('ytm')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
                 searchSource === 'ytm'
-                  ? 'bg-red-600 text-white shadow-md'
-                  : 'bg-white/5 hover:bg-white/10 text-red-400 hover:text-red-300 border border-white/10'
+                  ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
+                  : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10'
               }`}
             >
-              <Radio size={12} className="text-white" />
+              <Radio size={12} />
               <span>YouTube Music (Search Millions)</span>
             </button>
           </div>
@@ -215,12 +214,12 @@ export default function MainContent() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Radio size={18} className="text-red-500" />
+                  <Radio size={18} className="text-white" />
                   <SectionTitle>
                     {searchQuery.trim() ? `YouTube Music Results for "${searchQuery}"` : 'Trending on YouTube Music'}
                   </SectionTitle>
                 </div>
-                {isYtmLoading && <span className="text-xs text-pink-400 animate-pulse">Searching catalog...</span>}
+                {isYtmLoading && <span className="text-xs text-white/70 animate-pulse">Searching catalog...</span>}
               </div>
 
               {searchQuery.trim() ? (
@@ -255,7 +254,7 @@ export default function MainContent() {
                     className="relative rounded-3xl overflow-hidden p-6 sm:p-8 flex flex-col justify-between shadow-2xl border border-white/15 transition-all duration-700"
                     style={{
                       minHeight: '230px',
-                      background: `linear-gradient(135deg, ${themeColors.primary}77 0%, ${themeColors.secondary}77 100%)`,
+                      background: `linear-gradient(135deg, rgba(30, 35, 45, 0.95) 0%, rgba(12, 14, 20, 0.98) 100%)`,
                     }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
@@ -266,7 +265,7 @@ export default function MainContent() {
                     </div>
 
                     <div className="relative z-10 space-y-2 max-w-lg">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-pink-300">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-white">
                         <Sparkles size={12} />
                         <span>Featured Track of the Day</span>
                       </div>
@@ -286,9 +285,9 @@ export default function MainContent() {
                       <div className="flex items-center gap-3 pt-2">
                         <button
                           onClick={() => playTrack(featuredTrack)}
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white text-xs font-semibold shadow-xl hover:scale-105 transition-all"
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-neutral-200 text-black text-xs font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 transition-all"
                         >
-                          <Play size={14} className="fill-white" />
+                          <Play size={14} className="fill-black" />
                           <span>Play Now</span>
                         </button>
                         <button
@@ -306,20 +305,20 @@ export default function MainContent() {
                 {!searchQuery && (
                   <div
                     onClick={() => setIsWrappedOpen(true)}
-                    className="relative rounded-2xl p-4 bg-gradient-to-r from-yellow-500/20 via-pink-600/30 to-purple-600/30 border border-white/15 flex items-center justify-between cursor-pointer hover:scale-101 transition-all shadow-lg group"
+                    className="relative rounded-2xl p-4 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-transparent border border-white/15 flex items-center justify-between cursor-pointer hover:scale-101 transition-all shadow-lg group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-pink-500 flex items-center justify-center shadow-md">
-                        <Trophy size={18} className="text-white" />
+                      <div className="w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center shadow-md">
+                        <Trophy size={18} />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-white group-hover:text-pink-300 transition-colors">
+                        <h3 className="text-xs font-bold text-white group-hover:text-white/80 transition-colors">
                           Your 2026 Tunely Wrapped is Ready!
                         </h3>
                         <p className="text-[11px] text-white/60">Discover your top tracks, minutes streamed & music personality</p>
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-pink-400 group-hover:translate-x-1 transition-transform">
+                    <span className="text-xs font-semibold text-white group-hover:translate-x-1 transition-transform">
                       View Story →
                     </span>
                   </div>
@@ -335,7 +334,7 @@ export default function MainContent() {
                         flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200
                         ${
                           activeMood === m.id
-                            ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold shadow-md scale-105'
+                            ? 'bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.25)] scale-105'
                             : 'bg-white/10 hover:bg-white/15 text-white/70 hover:text-white border border-white/10'
                         }
                       `}

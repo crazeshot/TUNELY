@@ -58,44 +58,44 @@ export default function CommandPalette() {
       run: () => setIsEqualizerOpen(true),
     },
     {
-      id: 'act-slowed',
-      title: 'Toggle Slowed + Reverb Mode',
-      category: 'Audio Mode',
+      id: 'act-slow',
+      title: 'Toggle Slowed + Reverb Audio DSP',
+      category: 'Audio Effects',
       icon: Sparkles,
       run: () => toggleSlowedReverb(),
     },
     {
-      id: 'act-nightcore',
-      title: 'Toggle Nightcore High-Energy Mode',
-      category: 'Audio Mode',
+      id: 'act-night',
+      title: 'Toggle Nightcore Speed Pitch',
+      category: 'Audio Effects',
       icon: Zap,
       run: () => toggleNightcore(),
     },
     {
       id: 'act-sleep',
       title: 'Set Sleep Timer',
-      category: 'Utility',
+      category: 'Playback Tools',
       icon: Moon,
       run: () => setIsSleepTimerOpen(true),
     },
     {
       id: 'act-home',
-      title: 'Go to Explore / Home',
+      title: 'Navigate to Explore Music',
       category: 'Navigation',
       icon: Home,
       run: () => setActiveTab('home'),
     },
     {
-      id: 'act-lib',
-      title: 'Go to Your Library',
+      id: 'act-library',
+      title: 'Navigate to Your Library',
       category: 'Navigation',
       icon: LayoutGrid,
       run: () => setActiveTab('library'),
     },
     {
       id: 'act-clear-q',
-      title: 'Clear Now Playing Queue',
-      category: 'Queue',
+      title: 'Clear Current Next Queue',
+      category: 'Queue Management',
       icon: Trash2,
       run: () => clearQueue(),
     },
@@ -146,17 +146,17 @@ export default function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/70 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/80 backdrop-blur-md animate-fade-in"
       onClick={() => setIsCommandPaletteOpen(false)}
     >
       <div
         className="w-full max-w-xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden text-white"
-        style={{ background: 'rgba(20, 10, 30, 0.95)', backdropFilter: 'blur(30px)' }}
+        style={{ background: 'rgba(20, 22, 28, 0.98)', backdropFilter: 'blur(30px)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-white/10">
-          <Search size={18} className="text-pink-400 shrink-0" />
+          <Search size={18} className="text-white/70 shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -169,7 +169,7 @@ export default function CommandPalette() {
             placeholder="Type a song, artist, command, or mode... (Esc to exit)"
             className="w-full bg-transparent text-sm text-white placeholder-white/40 outline-none"
           />
-          <span className="text-[10px] font-mono text-white/30 bg-white/10 px-2 py-0.5 rounded">
+          <span className="text-[10px] font-mono text-white/50 bg-white/10 px-2 py-0.5 rounded">
             ESC
           </span>
         </div>
@@ -199,7 +199,7 @@ export default function CommandPalette() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                        isSelected ? 'bg-pink-500/30 text-pink-300' : 'bg-white/10 text-white/60'
+                        isSelected ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'bg-white/10 text-white/60'
                       }`}
                     >
                       <ItemIcon size={14} />

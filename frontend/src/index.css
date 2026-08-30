@@ -14,8 +14,8 @@
 html, body, #root {
   height: 100%;
   width: 100%;
-  background: #100616;
-  color: #f0e8fa;
+  background: #090a0f;
+  color: #f8fafc;
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow: hidden;
 }
@@ -29,11 +29,11 @@ html, body, #root {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(224, 82, 154, 0.35);
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(224, 82, 154, 0.6);
+  background: rgba(255, 255, 255, 0.55);
 }
 
 /* Range input styling */
@@ -47,20 +47,20 @@ input[type=range] {
 input[type=range]::-webkit-slider-runnable-track {
   height: 3px;
   border-radius: 99px;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.15);
 }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 11px;
   height: 11px;
   border-radius: 50%;
-  background: #e0529a;
-  box-shadow: 0 0 8px rgba(224, 82, 154, 0.8);
+  background: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.85);
   margin-top: -4px;
   transition: transform 0.1s ease;
 }
 input[type=range]::-webkit-slider-thumb:hover {
-  transform: scale(1.25);
+  transform: scale(1.3);
 }
 
 /* Waveform bars */
@@ -73,26 +73,26 @@ input[type=range]::-webkit-slider-thumb:hover {
 }
 .wbar:nth-child(2) { animation-delay: 0.15s; }
 .wbar:nth-child(3) { animation-delay: 0.3s; }
-.wbar:nth-child(4) { animation-delay: 0.1s; }
+.wbar:nth-child(4) { animation-delay: 0.45s; }
 
 @keyframes wbpulse {
-  0%, 100% { transform: scaleY(0.35); }
-  50% { transform: scaleY(1); }
+  0%, 100% { height: 4px; }
+  50% { height: 18px; }
 }
 
-/* Progress track and fill */
-.prog-track {
-  position: relative;
-  height: 3px;
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.15);
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
-.prog-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, #e0529a, #a855f7);
-  border-radius: 99px;
-  transition: width 0.1s linear;
+
+.animate-spin-slow {
+  animation: spinSlow 16s linear infinite;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

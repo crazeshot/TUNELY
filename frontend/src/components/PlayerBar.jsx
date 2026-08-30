@@ -65,10 +65,10 @@ export default function PlayerBar() {
     <div
       className="rounded-2xl overflow-hidden shadow-2xl transition-all duration-500 relative"
       style={{
-        background: 'rgba(25, 12, 35, 0.88)',
-        border: '1px solid rgba(255, 255, 255, 0.12)',
-        backdropFilter: 'blur(24px)',
-        boxShadow: `0 10px 30px ${themeColors.glow}`,
+        background: 'rgba(18, 20, 26, 0.94)',
+        border: '1px solid rgba(255, 255, 255, 0.14)',
+        backdropFilter: 'blur(28px)',
+        boxShadow: `0 10px 30px ${themeColors.glow || 'rgba(255, 255, 255, 0.15)'}`,
       }}
     >
       {/* Top row: thumb + title + like + controls */}
@@ -76,11 +76,11 @@ export default function PlayerBar() {
         {/* Album art with reactive bass glow */}
         <div
           className={`relative group cursor-pointer shrink-0 w-10 h-10 rounded-lg overflow-hidden transition-all duration-300 ${
-            isPlaying ? 'shadow-md scale-102' : ''
+            isPlaying ? 'shadow-md scale-102 ring-1 ring-white/30' : ''
           }`}
           onClick={() => setIsVisualizerOpen(true)}
           style={{
-            boxShadow: isPlaying ? `0 0 16px ${themeColors.glow}` : 'none',
+            boxShadow: isPlaying ? `0 0 16px ${themeColors.glow || 'rgba(255,255,255,0.2)'}` : 'none',
           }}
         >
           <img
@@ -102,7 +102,7 @@ export default function PlayerBar() {
             {currentTrack.title}
           </p>
           <p
-            className="text-white/45 text-[11px] truncate hover:text-pink-300 cursor-pointer transition-colors"
+            className="text-white/45 text-[11px] truncate hover:text-white cursor-pointer transition-colors"
             onClick={() => setActiveArtistModal(currentTrack)}
           >
             {currentTrack.artist_name || currentTrack.artist}
@@ -113,11 +113,11 @@ export default function PlayerBar() {
         <button
           onClick={() => toggleLike(currentTrack)}
           className={`shrink-0 p-1 hover:scale-110 transition-transform ${
-            isCurrentTrackLiked ? 'text-pink-400' : 'text-white/30 hover:text-white/70'
+            isCurrentTrackLiked ? 'text-white' : 'text-white/30 hover:text-white/70'
           }`}
           title={isCurrentTrackLiked ? 'Remove from Liked' : 'Like'}
         >
-          <Heart size={14} className={isCurrentTrackLiked ? 'fill-pink-400' : ''} />
+          <Heart size={14} className={isCurrentTrackLiked ? 'fill-white' : ''} />
         </button>
 
         {/* Controls */}
@@ -132,13 +132,13 @@ export default function PlayerBar() {
 
           <button
             onClick={togglePlay}
-            className="w-7 h-7 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 flex items-center justify-center shadow-md hover:scale-105 transition-all text-white"
+            className="w-7 h-7 rounded-full bg-white hover:bg-neutral-200 text-black flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.35)] hover:scale-105 transition-all"
             title={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? (
-              <Pause size={12} className="text-white" />
+              <Pause size={12} />
             ) : (
-              <Play size={12} className="text-white ml-0.5" />
+              <Play size={12} className="ml-0.5" />
             )}
           </button>
 
@@ -157,7 +157,7 @@ export default function PlayerBar() {
         <div className="relative group cursor-pointer py-1">
           <div className="h-1 w-full bg-white/15 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full transition-all duration-100"
+              className="h-full bg-white rounded-full transition-all duration-100 shadow-[0_0_8px_rgba(255,255,255,0.6)]"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -173,7 +173,7 @@ export default function PlayerBar() {
 
         {/* Sub-controls row */}
         <div className="flex items-center justify-between text-[10px] text-white/40 pt-1">
-          <span className="font-mono">
+          <span className="font-mono text-white/60">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
 
@@ -182,7 +182,7 @@ export default function PlayerBar() {
             <button
               onClick={toggleSpatialAudio}
               className={`transition-colors ${
-                isSpatialAudio ? 'text-blue-300 font-bold' : 'text-white/30 hover:text-white'
+                isSpatialAudio ? 'text-white font-bold' : 'text-white/30 hover:text-white'
               }`}
               title="3D Spatial Soundstage"
             >
@@ -193,7 +193,7 @@ export default function PlayerBar() {
             <button
               onClick={toggleSlowedReverb}
               className={`transition-colors ${
-                isSlowedReverb ? 'text-purple-300 font-bold' : 'text-white/30 hover:text-white'
+                isSlowedReverb ? 'text-white font-bold' : 'text-white/30 hover:text-white'
               }`}
               title="Slowed + Reverb Mode"
             >
@@ -213,7 +213,7 @@ export default function PlayerBar() {
             <button
               onClick={() => setIsSleepTimerOpen(true)}
               className={`transition-colors ${
-                sleepTimerSeconds !== null ? 'text-pink-400 font-bold' : 'text-white/30 hover:text-white'
+                sleepTimerSeconds !== null ? 'text-white font-bold' : 'text-white/30 hover:text-white'
               }`}
               title="Sleep Timer"
             >
@@ -223,7 +223,7 @@ export default function PlayerBar() {
             <button
               onClick={toggleShuffle}
               className={`hover:text-white transition-colors ${
-                isShuffle ? 'text-pink-400 font-bold' : 'text-white/30'
+                isShuffle ? 'text-white font-bold' : 'text-white/30'
               }`}
               title="Toggle Shuffle"
             >
@@ -233,7 +233,7 @@ export default function PlayerBar() {
             <button
               onClick={cycleRepeat}
               className={`hover:text-white transition-colors ${
-                repeatMode !== 'off' ? 'text-pink-400' : 'text-white/30'
+                repeatMode !== 'off' ? 'text-white font-bold' : 'text-white/30'
               }`}
               title={`Repeat: ${repeatMode}`}
             >
@@ -257,7 +257,7 @@ export default function PlayerBar() {
               {showVolumeSlider && (
                 <div
                   className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 rounded-xl border border-white/15 shadow-xl flex items-center gap-2"
-                  style={{ background: 'rgba(20, 10, 30, 0.96)', backdropFilter: 'blur(12px)' }}
+                  style={{ background: 'rgba(18, 20, 26, 0.98)', backdropFilter: 'blur(12px)' }}
                 >
                   <input
                     type="range"
@@ -275,7 +275,7 @@ export default function PlayerBar() {
             {/* Studio visualizer trigger */}
             <button
               onClick={() => setIsVisualizerOpen(true)}
-              className="text-white/40 hover:text-pink-400 transition-colors"
+              className="text-white/40 hover:text-white transition-colors"
               title="Open Visualizer & Lyrics"
             >
               <Maximize2 size={11} />

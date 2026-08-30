@@ -27,10 +27,10 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
       <div
         className="relative w-full max-w-md p-6 rounded-3xl border border-white/20 shadow-2xl text-white overflow-hidden"
-        style={{ background: 'rgba(24, 12, 34, 0.95)' }}
+        style={{ background: 'rgba(20, 22, 28, 0.98)' }}
       >
         {/* Close button */}
         <button
@@ -41,11 +41,11 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
         </button>
 
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-lg">
-            <Music2 size={20} className="text-white" />
+          <div className="w-10 h-10 rounded-2xl bg-white text-black flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            <Music2 size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-bold" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <h2 className="text-lg font-bold tracking-wide" style={{ fontFamily: 'Syne, sans-serif' }}>
               Create New Playlist
             </h2>
             <p className="text-xs text-white/50">Curate your favorite tracks</p>
@@ -61,7 +61,7 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Midnight Chill & Study"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white focus:ring-1 focus:ring-white/20 transition-all"
             />
           </div>
 
@@ -72,7 +72,7 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Give your playlist a vibe description..."
-              className="w-full px-3.5 py-2 rounded-xl bg-white/10 border border-white/15 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-pink-500/50 resize-none"
+              className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white focus:ring-1 focus:ring-white/20 resize-none transition-all"
             />
           </div>
 
@@ -86,7 +86,7 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
                   alt={`Cover choice ${i}`}
                   onClick={() => setCoverUrl(url)}
                   className={`w-full aspect-square object-cover rounded-xl cursor-pointer border-2 transition-all duration-200 ${
-                    coverUrl === url ? 'border-pink-500 scale-105 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
+                    coverUrl === url ? 'border-white scale-105 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 />
               ))}
@@ -104,7 +104,7 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
             <button
               type="submit"
               disabled={!title.trim()}
-              className="px-5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white shadow-lg transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-neutral-200 text-black shadow-[0_0_15px_rgba(255,255,255,0.25)] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Create Playlist
             </button>

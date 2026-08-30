@@ -16,11 +16,29 @@ import { api } from '../services/api';
 import { audioEngine, EQ_PRESETS } from '../services/audioEngine';
 import { extractColorsFromImage } from '../utils/colorExtractor';
 import { saveTrackForOffline, getAllOfflineTracks, deleteOfflineTrack } from '../services/offlineStorage';
+import { useAuth } from './useAuth';
 
 export function PlayerProvider({ children }) {
-  const [currentTrack, setCurrentTrack] = useState(defaultTrack);
+  const { isLoggedIn, setIsAuthModalOpen } = useAuth();
+
+  // Load last played track from localStorage or fallback to default
+  const [currentTrack, setCurrentTrack] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tunely_last_played_track');
+      return saved ? JSON.parse(saved) : defaultTrack;
+    } catch {
+      return defaultTrack;
+    }
+  });
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(() => {
+    try {
+      const saved = parseFloat(localStorage.getItem('tunely_last_played_time') || '0');
+      return !isNaN(saved) ? saved : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [audioDuration, setAudioDuration] = useState(null);
   const duration = audioDuration || currentTrack?.durationSeconds || 240;
   const [progress, setProgressState] = useState(0);
@@ -65,10 +83,10 @@ export function PlayerProvider({ children }) {
 
   // Theme & Toast
   const [themeColors, setThemeColors] = useState({
-    primary: '#e0529a',
-    secondary: '#5227FF',
-    glow: 'rgba(224, 82, 154, 0.4)',
-    gradient: ['#5227FF', '#FF9FFC', '#B19EEF'],
+    primary: '#ffffff',
+    secondary: '#94a3b8',
+    glow: 'rgba(255, 255, 255, 0.35)',
+    gradient: ['#0f172a', '#475569', '#cbd5e1'],
   });
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -84,6 +102,28 @@ export function PlayerProvider({ children }) {
       setToastMessage(null);
     }, 2500);
   }, []);
+
+  // Sync last played track to localStorage
+  useEffect(() => {
+    if (currentTrack) {
+      try {
+        localStorage.setItem('tunely_last_played_track', JSON.stringify(currentTrack));
+      } catch {
+        // Ignore storage errors
+      }
+    }
+  }, [currentTrack]);
+
+  // Sync last played time to localStorage
+  useEffect(() => {
+    if (currentTime > 0) {
+      try {
+        localStorage.setItem('tunely_last_played_time', currentTime.toFixed(1));
+      } catch {
+        // Ignore storage errors
+      }
+    }
+  }, [currentTime]);
 
   // Sync Offline Tracks on mount
   useEffect(() => {
@@ -223,6 +263,11 @@ export function PlayerProvider({ children }) {
 
   // Playback Actions
   const playTrack = useCallback((track) => {
+    if (!isLoggedIn) {
+      showToast('🔒 Sign in or create an account to play songs');
+      setIsAuthModalOpen(true);
+      return;
+    }
     setCurrentTrack(track);
     setIsPlaying(true);
     setCurrentTime(0);
@@ -250,9 +295,14 @@ export function PlayerProvider({ children }) {
     if (track.id && !track.is_ytm) {
       api.recordPlay(track.id);
     }
-  }, [playSynthFallback]);
+  }, [isLoggedIn, setIsAuthModalOpen, showToast, playSynthFallback]);
 
   const togglePlay = useCallback(() => {
+    if (!isLoggedIn) {
+      showToast('🔒 Sign in or create an account to play songs');
+      setIsAuthModalOpen(true);
+      return;
+    }
     const audio = audioRef.current;
     if (!audio) return;
     audioEngine.resume();
@@ -268,7 +318,7 @@ export function PlayerProvider({ children }) {
         setIsPlaying(true);
       });
     }
-  }, [isPlaying, playSynthFallback]);
+  }, [isLoggedIn, setIsAuthModalOpen, showToast, isPlaying, playSynthFallback]);
 
   const pauseTrack = useCallback(() => {
     const audio = audioRef.current;
