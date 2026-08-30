@@ -37,10 +37,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
         {collapsed && (
           <div className="flex flex-col items-center pt-16 px-2">
             <img
-              src="/app-icon.png"
+              src="/logo.svg"
               alt="Tunely"
               onClick={onToggle}
-              className="w-10 h-10 rounded-2xl object-cover shadow-lg ring-1 ring-white/20 hover:scale-105 transition-transform cursor-pointer"
+              className="w-10 h-auto object-contain hover:scale-105 transition-transform cursor-pointer"
               title="Expand Sidebar"
             />
           </div>
@@ -61,7 +61,7 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
             title="Tunely Home"
           >
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="Tunely"
               className="h-8 max-w-[175px] object-contain transition-transform duration-300 group-hover:scale-102"
             />

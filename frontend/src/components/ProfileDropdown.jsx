@@ -214,9 +214,9 @@ export default function ProfileDropdown() {
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src="/app-icon.png"
+              src="/logo.svg"
               alt="Tunely"
-              className="w-14 h-14 rounded-2xl object-cover mx-auto shadow-[0_0_20px_rgba(255,255,255,0.3)] ring-1 ring-white/20"
+              className="h-10 w-auto object-contain mx-auto shadow-[0_0_20px_rgba(255,255,255,0.3)]"
             />
 
             <div>
