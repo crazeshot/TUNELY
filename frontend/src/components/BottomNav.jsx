@@ -1,11 +1,10 @@
-import { Home, Search, LayoutGrid, Settings } from 'lucide-react';
+import { Home, Search, LayoutGrid } from 'lucide-react';
 import { usePlayer } from '../context/usePlayer';
 
 const TABS = [
   { key: 'home', label: 'Home', icon: Home },
   { key: 'search', label: 'Search', icon: Search },
   { key: 'library', label: 'Library', icon: LayoutGrid },
-  { key: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export default function BottomNav() {
