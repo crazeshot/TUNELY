@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, Plus, Music, Library, Heart, Radio, Sparkles, Users, Trophy, Settings } from 'lucide-react';
+import { ChevronLeft, Plus, Music, Library, Heart, Radio, Sparkles, Users, Trophy, Settings, Search } from 'lucide-react';
 import PlayerBar from './PlayerBar';
 import CreatePlaylistModal from './CreatePlaylistModal';
 import { usePlayer } from '../context/usePlayer';
@@ -67,6 +67,18 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
             >
               <Radio size={15} />
               <span>Explore Music</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('search')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'search'
+                  ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Search size={15} />
+              <span>Search Tracks</span>
             </button>
 
             <button
