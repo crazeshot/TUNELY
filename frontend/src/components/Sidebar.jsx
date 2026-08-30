@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, Plus, Music, Library, Heart, Radio, Sparkles, Users, Trophy } from 'lucide-react';
+import { ChevronLeft, Plus, Music, Library, Heart, Radio, Sparkles, Users, Trophy, Settings } from 'lucide-react';
 import PlayerBar from './PlayerBar';
 import CreatePlaylistModal from './CreatePlaylistModal';
 import { usePlayer } from '../context/usePlayer';
@@ -110,6 +110,19 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
             >
               <Trophy size={15} className="text-white/70" />
               <span>Tunely Wrapped</span>
+            </button>
+
+            {/* Settings */}
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'settings'
+                  ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Settings size={15} />
+              <span>Settings</span>
             </button>
           </div>
 

@@ -46,6 +46,7 @@ function AppLayout() {
     setIsEqualizerOpen,
     setIsCommandPaletteOpen,
     themeColors,
+    enableShader,
   } = usePlayer();
 
   // Global Keyboard Shortcuts
@@ -127,27 +128,29 @@ function AppLayout() {
   return (
     <div className="relative w-full h-full overflow-hidden select-none" style={{ background: '#090a0f' }}>
       {/* Animated Three.js Liquid Ether Shader Ambient Background */}
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-60">
-        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-          <LiquidEther
-            colors={themeColors.gradient || ['#0f172a', '#475569', '#cbd5e1']}
-            mouseForce={18}
-            cursorSize={90}
-            isViscous
-            viscous={28}
-            iterationsViscous={28}
-            iterationsPoisson={28}
-            resolution={0.5}
-            isBounce={false}
-            autoDemo
-            autoSpeed={0.4}
-            autoIntensity={2.0}
-            takeoverDuration={0.25}
-            autoResumeDelay={3000}
-            autoRampDuration={0.6}
-          />
+      {enableShader && (
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-60">
+          <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            <LiquidEther
+              colors={themeColors.gradient || ['#0f172a', '#475569', '#cbd5e1']}
+              mouseForce={18}
+              cursorSize={90}
+              isViscous
+              viscous={28}
+              iterationsViscous={28}
+              iterationsPoisson={28}
+              resolution={0.5}
+              isBounce={false}
+              autoDemo
+              autoSpeed={0.4}
+              autoIntensity={2.0}
+              takeoverDuration={0.25}
+              autoResumeDelay={3000}
+              autoRampDuration={0.6}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Dynamic ambient radial lighting overlays tuned to monochromatic theme */}
       <div

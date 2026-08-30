@@ -4,6 +4,7 @@ import SearchBar from './SearchBar';
 import AlbumCard from './AlbumCard';
 import BottomNav from './BottomNav';
 import AudioCanvasVisualizer from './AudioCanvasVisualizer';
+import SettingsPage from './SettingsPage';
 import { recommended, recentlyPlayed, allTracks, genresList } from '../data/musicData';
 import { usePlayer } from '../context/usePlayer';
 import { useAuth } from '../context/useAuth';
@@ -590,6 +591,10 @@ export default function MainContent() {
                   </section>
                 )}
               </div>
+            )}
+
+            {activeTab === 'settings' && (
+              <SettingsPage />
             )}
           </>
         )}

@@ -10,6 +10,7 @@ import {
   Trash2,
   Home,
   LayoutGrid,
+  Settings,
 } from 'lucide-react';
 import { usePlayer } from '../context/usePlayer';
 import { allTracks } from '../data/musicData';
@@ -91,6 +92,13 @@ export default function CommandPalette() {
       category: 'Navigation',
       icon: LayoutGrid,
       run: () => setActiveTab('library'),
+    },
+    {
+      id: 'act-settings',
+      title: 'Open Settings & Preferences',
+      category: 'Navigation',
+      icon: Settings,
+      run: () => setActiveTab('settings'),
     },
     {
       id: 'act-clear-q',

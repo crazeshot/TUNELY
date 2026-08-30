@@ -11,7 +11,7 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { PlayerCtx } from './PlayerContextInstance';
-import { defaultTrack, initialQueue, initialPlaylists, recommended, recentlyPlayed } from '../data/musicData';
+import { allTracks, defaultTrack, initialQueue, initialPlaylists, recommended, recentlyPlayed } from '../data/musicData';
 import { api } from '../services/api';
 import { audioEngine, EQ_PRESETS } from '../services/audioEngine';
 import { extractColorsFromImage } from '../utils/colorExtractor';
@@ -50,6 +50,37 @@ export function PlayerProvider({ children }) {
   const [isSlowedReverb, setIsSlowedReverb] = useState(false);
   const [isNightcore, setIsNightcore] = useState(false);
   const [isSpatialAudio, setIsSpatialAudio] = useState(false);
+
+  // Settings & Autoplay States
+  const [isAutoplay, setIsAutoplay] = useState(() => {
+    try {
+      return localStorage.getItem('tunely_autoplay') !== 'false';
+    } catch {
+      return true;
+    }
+  });
+  const [audioQuality, setAudioQualityState] = useState(() => {
+    try {
+      return localStorage.getItem('tunely_audio_quality') || 'high';
+    } catch {
+      return 'high';
+    }
+  });
+  const [crossfadeSeconds, setCrossfadeSecondsState] = useState(() => {
+    try {
+      return parseInt(localStorage.getItem('tunely_crossfade') || '0', 10);
+    } catch {
+      return 0;
+    }
+  });
+  const [isNormalization, setIsNormalization] = useState(true);
+  const [enableShader, setEnableShaderState] = useState(() => {
+    try {
+      return localStorage.getItem('tunely_shader') !== 'false';
+    } catch {
+      return true;
+    }
+  });
 
   // Equalizer
   const [eqPreset, setEqPresetState] = useState('Flat');
@@ -348,14 +379,34 @@ export function PlayerProvider({ children }) {
       setQueue(newQueue);
       playTrack(next);
     } else if (repeatMode === 'all') {
-      const all = [...recommended, ...recentlyPlayed];
+      const all = [...allTracks, ...recommended, ...recentlyPlayed];
       const next = all[Math.floor(Math.random() * all.length)];
       playTrack(next);
+    } else if (isAutoplay) {
+      const all = [...allTracks, ...recommended, ...recentlyPlayed];
+      const currentIndex = all.findIndex(t => t.id === currentTrack?.id || (t.videoId && t.videoId === currentTrack?.videoId));
+      const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % all.length : Math.floor(Math.random() * all.length);
+      const nextTrack = all[nextIndex] || defaultTrack;
+      showToast(`🎵 Autoplaying: "${nextTrack.title}"`);
+      playTrack(nextTrack);
     } else {
       setIsPlaying(false);
       setProgressState(0);
+      setCurrentTime(0);
     }
-  }, [queue, isShuffle, repeatMode, playTrack]);
+  }, [queue, isShuffle, repeatMode, isAutoplay, currentTrack, playTrack, showToast]);
+
+  const handleTrackEnd = useCallback(() => {
+    if (repeatMode === 'one') {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      }
+    } else {
+      handleNext();
+    }
+  }, [repeatMode, handleNext]);
 
   const handlePrev = useCallback(() => {
     const audio = audioRef.current;
@@ -377,18 +428,8 @@ export function PlayerProvider({ children }) {
   // Keep latest onEnded callback in ref
   const onEndedRef = useRef(null);
   useEffect(() => {
-    onEndedRef.current = () => {
-      if (repeatMode === 'one') {
-        const audio = audioRef.current;
-        if (audio) {
-          audio.currentTime = 0;
-          audio.play().catch(() => {});
-        }
-      } else {
-        handleNext();
-      }
-    };
-  }, [repeatMode, handleNext]);
+    onEndedRef.current = handleTrackEnd;
+  }, [handleTrackEnd]);
 
   // Initialize HTML5 Audio element & Web Audio DSP engine
   useEffect(() => {
@@ -695,6 +736,68 @@ export function PlayerProvider({ children }) {
     await api.removeTrackFromPlaylist(playlistId, trackId);
   }, [showToast]);
 
+  const toggleAutoplay = useCallback(() => {
+    setIsAutoplay(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('tunely_autoplay', String(next));
+      } catch {
+        // Ignore storage error
+      }
+      showToast(next ? '✓ Autoplay enabled: continuous songs' : 'Autoplay disabled');
+      return next;
+    });
+  }, [showToast]);
+
+  const setAudioQuality = useCallback((quality) => {
+    setAudioQualityState(quality);
+    try {
+      localStorage.setItem('tunely_audio_quality', quality);
+    } catch {
+      // Ignore storage error
+    }
+    const labels = { lossless: 'Lossless FLAC 1411kbps', high: 'High-Res AAC 320kbps', standard: 'Standard 160kbps' };
+    showToast(`Audio streaming: ${labels[quality] || quality}`);
+  }, [showToast]);
+
+  const setCrossfadeSeconds = useCallback((sec) => {
+    setCrossfadeSecondsState(sec);
+    try {
+      localStorage.setItem('tunely_crossfade', String(sec));
+    } catch {
+      // Ignore storage error
+    }
+    showToast(sec > 0 ? `Crossfade: ${sec}s transition` : 'Crossfade disabled');
+  }, [showToast]);
+
+  const toggleNormalization = useCallback(() => {
+    setIsNormalization(prev => {
+      const next = !prev;
+      showToast(next ? 'Volume normalization enabled' : 'Volume normalization disabled');
+      return next;
+    });
+  }, [showToast]);
+
+  const setEnableShader = useCallback((val) => {
+    setEnableShaderState(val);
+    try {
+      localStorage.setItem('tunely_shader', String(val));
+    } catch {
+      // Ignore storage error
+    }
+    showToast(val ? 'Dynamic Liquid Ether shader enabled' : 'Eco Mode: shader disabled');
+  }, [showToast]);
+
+  const clearAudioCache = useCallback(() => {
+    try {
+      localStorage.removeItem('tunely_last_played_track');
+      localStorage.removeItem('tunely_last_played_time');
+      showToast('✓ Audio & streaming cache cleared');
+    } catch {
+      showToast('Cache cleared');
+    }
+  }, [showToast]);
+
   const isCurrentTrackLiked = likedTrackIds.has(currentTrack?.id);
 
   const value = {
@@ -711,6 +814,11 @@ export function PlayerProvider({ children }) {
     isSlowedReverb,
     isNightcore,
     isSpatialAudio,
+    isAutoplay,
+    audioQuality,
+    crossfadeSeconds,
+    isNormalization,
+    enableShader,
     eqPreset,
     eqBands,
     queue,
@@ -741,6 +849,13 @@ export function PlayerProvider({ children }) {
     setProgress: seekTo,
     nextTrack: handleNext,
     prevTrack: handlePrev,
+    handleTrackEnd,
+    toggleAutoplay,
+    setAudioQuality,
+    setCrossfadeSeconds,
+    toggleNormalization,
+    setEnableShader,
+    clearAudioCache,
     setVolume,
     toggleMute,
     toggleShuffle,
