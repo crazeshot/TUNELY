@@ -37,7 +37,7 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
         {collapsed && (
           <div className="flex flex-col items-center pt-16 px-2">
             <img
-              src="/logo.svg"
+              src="/favicon.svg"
               alt="Tunely"
               onClick={onToggle}
               className="w-10 h-auto object-contain hover:scale-105 transition-transform cursor-pointer"
