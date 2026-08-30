@@ -213,9 +213,11 @@ export default function ProfileDropdown() {
             style={{ background: 'rgba(18, 20, 26, 0.98)', backdropFilter: 'blur(30px)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-12 rounded-2xl bg-white text-black flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(255,255,255,0.4)]">
-              <Disc size={24} />
-            </div>
+            <img
+              src="/app-icon.png"
+              alt="Tunely"
+              className="w-14 h-14 rounded-2xl object-cover mx-auto shadow-[0_0_20px_rgba(255,255,255,0.3)] ring-1 ring-white/20"
+            />
 
             <div>
               <h3 className="text-xl font-bold tracking-tight" style={{ fontFamily: "'gg sans', sans-serif" }}>

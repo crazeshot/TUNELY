@@ -33,6 +33,19 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
           <ChevronLeft size={16} />
         </button>
 
+        {/* Collapsed Logo Icon */}
+        {collapsed && (
+          <div className="flex flex-col items-center pt-16 px-2">
+            <img
+              src="/app-icon.png"
+              alt="Tunely"
+              onClick={onToggle}
+              className="w-10 h-10 rounded-2xl object-cover shadow-lg ring-1 ring-white/20 hover:scale-105 transition-transform cursor-pointer"
+              title="Expand Sidebar"
+            />
+          </div>
+        )}
+
         <div
           aria-hidden={collapsed}
           className={`
@@ -41,17 +54,17 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
             ${collapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}
           `}
         >
-          {/* Top: Logo with monochrome glow */}
-          <div className="flex items-center gap-2.5 px-6 pt-6 pb-5">
-            <div className="w-8 h-8 rounded-xl bg-white text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.4)]">
-              <Sparkles size={16} />
-            </div>
-            <h1
-              className="text-white font-extrabold tracking-tight text-2xl"
-              style={{ fontFamily: "'gg sans', sans-serif", letterSpacing: '-0.5px' }}
-            >
-              Tunely
-            </h1>
+          {/* Top: Official Tunely Brand Logo */}
+          <div
+            className="flex items-center gap-3 px-5 pt-6 pb-4 cursor-pointer group"
+            onClick={() => setActiveTab('home')}
+            title="Tunely Home"
+          >
+            <img
+              src="/logo.png"
+              alt="Tunely"
+              className="h-8 max-w-[175px] object-contain transition-transform duration-300 group-hover:scale-102"
+            />
           </div>
 
           {/* Nav Quick Shortcuts */}
