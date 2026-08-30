@@ -1,0 +1,29 @@
+{
+  "name": "Tunely - Audiophile Streaming Platform",
+  "short_name": "Tunely",
+  "description": "Next-generation spatial music streaming platform with real-time Web Audio DSP, 10-band equalizer, and synchronized lyrics.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e0514",
+  "theme_color": "#e0529a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Explore Music",
+      "url": "/",
+      "description": "Discover new music tracks"
+    },
+    {
+      "name": "Liked Songs",
+      "url": "/#library",
+      "description": "Listen to your favorite songs"
+    }
+  ]
+}
