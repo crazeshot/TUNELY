@@ -296,6 +296,67 @@ class YTMusicService:
             print(f"[YTMusic] Stream extraction error: {e}")
             return None
 
+    def get_related_tracks(self, video_id=None, artist_name="", title="", limit=10):
+        """
+        Fetch related songs from YouTube Music radio/watch playlist or artist search.
+        Strictly filters pure songs.
+        """
+        tracks = []
+        seen_ids = set()
+
+        if video_id:
+            try:
+                watch_data = self.ytm.get_watch_playlist(videoId=video_id, limit=limit + 5)
+                raw_tracks = watch_data.get('tracks', [])
+                for item in raw_tracks:
+                    vid = item.get('videoId')
+                    if not vid or vid == video_id or vid in seen_ids:
+                        continue
+                    t_title = item.get('title', 'Related Song')
+                    artists = item.get('artists', [])
+                    a_name = artists[0]['name'] if artists else (artist_name or 'Artist')
+                    thumbnails = item.get('thumbnails', [])
+                    cover_url = thumbnails[-1]['url'] if thumbnails else 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600'
+                    duration_str = item.get('length', '3:30')
+                    duration_sec = self._parse_duration(duration_str)
+
+                    if not self._is_pure_song(t_title, duration_sec):
+                        continue
+
+                    seen_ids.add(vid)
+                    tracks.append({
+                        'id': f"ytm-{vid}",
+                        'videoId': vid,
+                        'title': t_title,
+                        'artist_name': a_name,
+                        'artist': a_name,
+                        'cover_url': cover_url,
+                        'cover': cover_url,
+                        'duration': duration_str,
+                        'duration_seconds': duration_sec,
+                        'genre': 'YouTube Music Radio',
+                        'audio_url': f"/api/ytm/stream/{vid}/",
+                        'youtube_url': f"https://www.youtube.com/watch?v={vid}",
+                        'is_ytm': True,
+                    })
+                    if len(tracks) >= limit:
+                        break
+            except Exception as e:
+                print(f"[YTMusic] Related watch playlist note: {e}")
+
+        # Fallback to searching artist or related tracks if watch playlist returned few
+        if len(tracks) < 3 and (artist_name or title):
+            query = f"{artist_name} songs" if artist_name else f"{title} song"
+            search_results = self.search_youtube_videos(query, limit=limit)
+            for st in search_results:
+                if st.get('videoId') != video_id and st.get('videoId') not in seen_ids:
+                    seen_ids.add(st['videoId'])
+                    tracks.append(st)
+                    if len(tracks) >= limit:
+                        break
+
+        return tracks
+
     def get_lyrics(self, video_id):
         try:
             watch_playlist = self.ytm.get_watch_playlist(videoId=video_id)

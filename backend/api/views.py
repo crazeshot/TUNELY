@@ -529,3 +529,20 @@ def ytm_stream_view(request, video_id):
 def ytm_lyrics_view(request, video_id):
     lyrics = ytmusic_service.get_lyrics(video_id)
     return Response({'lyrics': lyrics})
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def ytm_related_view(request):
+    video_id = request.query_params.get('videoId', '').strip()
+    artist = request.query_params.get('artist', '').strip()
+    title = request.query_params.get('title', '').strip()
+    limit = int(request.query_params.get('limit', 10))
+
+    tracks = ytmusic_service.get_related_tracks(
+        video_id=video_id if video_id else None,
+        artist_name=artist,
+        title=title,
+        limit=limit
+    )
+    return Response({'tracks': tracks})

@@ -20,6 +20,7 @@ from .views import (
     ytm_trending_view,
     ytm_stream_view,
     ytm_lyrics_view,
+    ytm_related_view,
 )
 
 router = DefaultRouter()
@@ -44,5 +45,6 @@ urlpatterns = [
     path('ytm/trending/', ytm_trending_view, name='ytm-trending'),
     path('ytm/stream/<str:video_id>/', ytm_stream_view, name='ytm-stream'),
     path('ytm/lyrics/<str:video_id>/', ytm_lyrics_view, name='ytm-lyrics'),
+    path('ytm/related/', ytm_related_view, name='ytm-related'),
     path('', include(router.urls)),
 ]

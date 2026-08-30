@@ -331,6 +331,27 @@ export const api = {
     }
   },
 
+  async getYTMRelated(videoId, artist = '', title = '', limit = 10) {
+    try {
+      const params = new URLSearchParams();
+      if (videoId) params.append('videoId', videoId);
+      if (artist) params.append('artist', artist);
+      if (title) params.append('title', title);
+      params.append('limit', String(limit));
+
+      const res = await fetch(`${BASE_URL}/ytm/related/?${params.toString()}`);
+      if (!res.ok) throw new Error('YTM related fetch failed');
+      const data = await res.json();
+      return (data.tracks || []).map((t) => ({
+        ...t,
+        audio_url: `${BASE_URL}/ytm/stream/${t.videoId}/`,
+      }));
+    } catch (err) {
+      console.warn('[API] YTM related note:', err.message);
+      return [];
+    }
+  },
+
   // Aliases for seamless casing compatibility
   searchYtm(query, limit) {
     return this.searchYTM(query, limit);
@@ -342,5 +363,9 @@ export const api = {
 
   getYtmLyrics(videoId) {
     return this.getYTMLyrics(videoId);
+  },
+
+  getYtmRelated(videoId, artist, title, limit) {
+    return this.getYTMRelated(videoId, artist, title, limit);
   },
 };

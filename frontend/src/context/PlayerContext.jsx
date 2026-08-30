@@ -369,7 +369,7 @@ export function PlayerProvider({ children }) {
     window.dispatchEvent(new CustomEvent('tunely-seek', { detail: { percent: clamped } }));
   }, []);
 
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback(async () => {
     if (queue.length > 0) {
       let nextIndex = 0;
       if (isShuffle) {
@@ -384,18 +384,55 @@ export function PlayerProvider({ children }) {
       const next = all[Math.floor(Math.random() * all.length)];
       playTrack(next);
     } else if (isAutoplay) {
-      const all = [...allTracks, ...recommended, ...recentlyPlayed];
-      const currentIndex = all.findIndex(t => t.id === currentTrack?.id || (t.videoId && t.videoId === currentTrack?.videoId));
-      const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % all.length : Math.floor(Math.random() * all.length);
-      const nextTrack = all[nextIndex] || defaultTrack;
-      showToast(`🎵 Autoplaying: "${nextTrack.title}"`);
-      playTrack(nextTrack);
+      // Fetch related songs from YouTube Music (not from static catalog)
+      try {
+        const vid = currentTrack?.videoId || null;
+        const artist = currentTrack?.artist_name || currentTrack?.artist || '';
+        const title = currentTrack?.title || '';
+
+        const relatedTracks = await api.getYtmRelated(vid, artist, title, 8);
+        const historyIds = new Set(history.map((h) => h.videoId || h.id));
+
+        const unplayedRelated = (relatedTracks || []).filter(
+          (t) => t && t.videoId !== vid && !historyIds.has(t.videoId) && !historyIds.has(t.id)
+        );
+
+        const nextTrack = unplayedRelated[0] || (relatedTracks && relatedTracks[0]);
+
+        if (nextTrack) {
+          const restQueue = (relatedTracks || []).filter((t) => t.videoId !== nextTrack.videoId);
+          if (restQueue.length > 0) {
+            setQueue(restQueue);
+          }
+          showToast(`🎵 Autoplaying related from YouTube Music: "${nextTrack.title}"`);
+          playTrack(nextTrack);
+          return;
+        }
+
+        // Fallback to YouTube Music trending if related query was empty
+        const trending = await api.getYtmTrending();
+        const unplayedTrending = (trending || []).filter(
+          (t) => t && t.videoId !== vid && !historyIds.has(t.videoId)
+        );
+        const nextTrending = unplayedTrending[0] || (trending && trending[0]);
+        if (nextTrending) {
+          showToast(`🎵 Autoplaying trending from YouTube Music: "${nextTrending.title}"`);
+          playTrack(nextTrending);
+          return;
+        }
+      } catch (err) {
+        console.warn('[Autoplay] YTM fetch note:', err);
+      }
+
+      setIsPlaying(false);
+      setProgressState(0);
+      setCurrentTime(0);
     } else {
       setIsPlaying(false);
       setProgressState(0);
       setCurrentTime(0);
     }
-  }, [queue, isShuffle, repeatMode, isAutoplay, currentTrack, playTrack, showToast]);
+  }, [queue, isShuffle, repeatMode, isAutoplay, currentTrack, history, playTrack, showToast]);
 
   const handleTrackEnd = useCallback(() => {
     if (repeatMode === 'one') {
