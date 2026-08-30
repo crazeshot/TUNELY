@@ -9,9 +9,9 @@
  *  - Group Session ("Listen Together") Hub
  *  - Dynamic Theme Palette & Sleep Timers
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { PlayerCtx } from './PlayerContextInstance';
-import { allTracks, defaultTrack, initialQueue, initialPlaylists, recommended, recentlyPlayed } from '../data/musicData';
+import { defaultTrack, initialQueue } from '../data/musicData';
 import { api } from '../services/api';
 import { audioEngine, EQ_PRESETS } from '../services/audioEngine';
 import { extractColorsFromImage } from '../utils/colorExtractor';
@@ -19,26 +19,24 @@ import { saveTrackForOffline, getAllOfflineTracks, deleteOfflineTrack } from '..
 import { useAuth } from './useAuth';
 
 export function PlayerProvider({ children }) {
-  const { isLoggedIn, setIsAuthModalOpen } = useAuth();
+  const { user, isLoggedIn, setIsAuthModalOpen } = useAuth();
+  const userId = user?.id ? String(user.id) : (user?.username || 'guest');
+  const currentUserIdRef = useRef(userId);
+  useEffect(() => { currentUserIdRef.current = userId; }, [userId]);
 
-  // Load last played track from localStorage or fallback to default
+  // Load last played track from per-user localStorage
   const [currentTrack, setCurrentTrack] = useState(() => {
     try {
-      const saved = localStorage.getItem('tunely_last_played_track');
-      return saved ? JSON.parse(saved) : defaultTrack;
+      const saved = localStorage.getItem(`tunely_last_track_v3_${userId}`);
+      if (saved) return JSON.parse(saved);
     } catch {
-      return defaultTrack;
+      // fallback
     }
+    return defaultTrack;
   });
+
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(() => {
-    try {
-      const saved = parseFloat(localStorage.getItem('tunely_last_played_time') || '0');
-      return !isNaN(saved) ? saved : 0;
-    } catch {
-      return 0;
-    }
-  });
+  const [currentTime, setCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(null);
   const duration = audioDuration || currentTrack?.durationSeconds || 240;
   const [progress, setProgressState] = useState(0);
@@ -89,11 +87,110 @@ export function PlayerProvider({ children }) {
   // Offline downloads
   const [downloadedTrackIds, setDownloadedTrackIds] = useState(new Set());
 
-  // Queue & Playlists
+  // Per-User Library, Playlists, Likes & Analytics States
   const [queue, setQueue] = useState(initialQueue);
-  const [history, setHistory] = useState([defaultTrack]);
-  const [playlists, setPlaylists] = useState(initialPlaylists);
-  const [likedTrackIds, setLikedTrackIds] = useState(new Set([0, 3, 7]));
+  const [history, setHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`tunely_history_v3_${userId}`);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return [];
+  });
+  const [playlists, setPlaylists] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`tunely_playlists_v3_${userId}`);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return [];
+  });
+  const [likedTracks, setLikedTracks] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`tunely_liked_tracks_v3_${userId}`);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return [];
+  });
+
+  const [likedTrackIds, setLikedTrackIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`tunely_liked_tracks_v3_${userId}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const ids = new Set();
+        parsed.forEach(t => {
+          if (t.id !== undefined && t.id !== null) ids.add(t.id);
+          if (t.videoId) ids.add(t.videoId);
+        });
+        return ids;
+      }
+    } catch {
+      // fallback
+    }
+    return new Set();
+  });
+
+  // Per-User Play Counts & Accurate Listening Seconds for Wrapped
+  const [playCounts, setPlayCounts] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`tunely_play_counts_v3_${userId}`);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return {};
+  });
+
+  const [totalListeningSeconds, setTotalListeningSeconds] = useState(() => {
+    try {
+      const saved = parseInt(localStorage.getItem(`tunely_listening_seconds_v3_${userId}`) || '0', 10);
+      return !isNaN(saved) ? saved : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  // Dynamic Reload when User switches / logs in / logs out
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const savedLikes = localStorage.getItem(`tunely_liked_tracks_v3_${userId}`);
+        const parsedLikes = savedLikes ? JSON.parse(savedLikes) : [];
+        setLikedTracks(parsedLikes);
+        const nextIds = new Set();
+        parsedLikes.forEach(t => {
+          if (t.id !== undefined && t.id !== null) nextIds.add(t.id);
+          if (t.videoId) nextIds.add(t.videoId);
+        });
+        setLikedTrackIds(nextIds);
+
+        const savedPls = localStorage.getItem(`tunely_playlists_v3_${userId}`);
+        setPlaylists(savedPls ? JSON.parse(savedPls) : []);
+
+        const savedHist = localStorage.getItem(`tunely_history_v3_${userId}`);
+        setHistory(savedHist ? JSON.parse(savedHist) : []);
+
+        const savedCounts = localStorage.getItem(`tunely_play_counts_v3_${userId}`);
+        setPlayCounts(savedCounts ? JSON.parse(savedCounts) : {});
+
+        const savedSecs = parseInt(localStorage.getItem(`tunely_listening_seconds_v3_${userId}`) || '0', 10);
+        setTotalListeningSeconds(!isNaN(savedSecs) ? savedSecs : 0);
+
+        const savedLast = localStorage.getItem(`tunely_last_track_v3_${userId}`);
+        if (savedLast) setCurrentTrack(JSON.parse(savedLast));
+      } catch (err) {
+        console.warn('[User Sync] Storage note:', err);
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [userId]);
+
   const [dailyMixes, setDailyMixes] = useState([]);
 
   // Navigation & Modals
@@ -322,16 +419,49 @@ export function PlayerProvider({ children }) {
       setIsAuthModalOpen(true);
       return;
     }
+    if (!track) return;
     setCurrentTrack(track);
     setIsPlaying(true);
     setCurrentTime(0);
     setProgressState(0);
-    setHistory(prev => [track, ...prev.filter(t => t.id !== track.id)].slice(0, 20));
+
+    const uid = currentUserIdRef.current;
+    const trackKey = track.videoId || (track.id !== undefined && track.id !== null ? String(track.id) : track.title);
+
+    // Save to user's history
+    setHistory(prev => {
+      const next = [track, ...prev.filter(t => {
+        const k = t.videoId || (t.id !== undefined && t.id !== null ? String(t.id) : t.title);
+        return k !== trackKey;
+      })].slice(0, 50);
+      try {
+        localStorage.setItem(`tunely_history_v3_${uid}`, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+
+    // Save last track for user
+    try {
+      localStorage.setItem(`tunely_last_track_v3_${uid}`, JSON.stringify(track));
+    } catch {
+      // ignore
+    }
+
+    // Increment play count for Wrapped ranking
+    setPlayCounts(prev => {
+      const next = { ...prev, [trackKey]: (prev[trackKey] || 0) + 1 };
+      try {
+        localStorage.setItem(`tunely_play_counts_v3_${uid}`, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
 
     // Dynamically fetch and populate real-time queue for the played song
-    if (track) {
-      refreshRealtimeQueue(track, false);
-    }
+    refreshRealtimeQueue(track, false);
 
     const audio = audioRef.current;
     if (audio) {
@@ -345,16 +475,14 @@ export function PlayerProvider({ children }) {
       if (streamUrl) {
         audio.src = streamUrl;
         audio.play().catch((err) => {
-          console.warn('[Audio] Direct stream notice:', err);
+          console.warn('[Audio Playback] Error or Autoplay block:', err);
           playSynthFallback();
         });
+      } else {
+        playSynthFallback();
       }
     }
-
-    if (track.id && !track.is_ytm) {
-      api.recordPlay(track.id);
-    }
-  }, [isLoggedIn, setIsAuthModalOpen, showToast, playSynthFallback, refreshRealtimeQueue]);
+  }, [isLoggedIn, setIsAuthModalOpen, showToast, refreshRealtimeQueue, playSynthFallback]);
 
   const togglePlay = useCallback(() => {
     if (!isLoggedIn) {
@@ -424,9 +552,11 @@ export function PlayerProvider({ children }) {
       setQueue(newQueue);
       playTrack(next);
     } else if (repeatMode === 'all') {
-      const all = [...allTracks, ...recommended, ...recentlyPlayed];
-      const next = all[Math.floor(Math.random() * all.length)];
-      playTrack(next);
+      const all = (history && history.length > 0) ? history : likedTracks;
+      if (all && all.length > 0) {
+        const next = all[Math.floor(Math.random() * all.length)];
+        playTrack(next);
+      }
     } else if (isAutoplay) {
       // Fetch related songs from YouTube Music (not from static catalog)
       try {
@@ -476,7 +606,7 @@ export function PlayerProvider({ children }) {
       setProgressState(0);
       setCurrentTime(0);
     }
-  }, [queue, isShuffle, repeatMode, isAutoplay, currentTrack, history, playTrack, showToast]);
+  }, [queue, isShuffle, repeatMode, likedTracks, isAutoplay, currentTrack, history, playTrack, showToast]);
 
   const handleTrackEnd = useCallback(() => {
     if (repeatMode === 'one') {
@@ -537,8 +667,33 @@ export function PlayerProvider({ children }) {
     audioEngine.init(audio);
 
     let lastTimeUpdate = 0;
+    let prevAudioTime = 0;
+    let secAccumulator = 0;
+
     const handleTimeUpdate = () => {
       if (!audio.duration || isNaN(audio.duration)) return;
+      const curTime = audio.currentTime;
+      const deltaSec = Math.max(0, curTime - prevAudioTime);
+      prevAudioTime = curTime;
+
+      // If playing normally (delta between 0 and 1.5s), accumulate exact listened seconds
+      if (deltaSec > 0 && deltaSec < 1.5) {
+        secAccumulator += deltaSec;
+        if (secAccumulator >= 1.0) {
+          const added = Math.floor(secAccumulator);
+          secAccumulator -= added;
+          setTotalListeningSeconds(prev => {
+            const next = prev + added;
+            try {
+              localStorage.setItem(`tunely_listening_seconds_v3_${currentUserIdRef.current}`, String(next));
+            } catch {
+              // ignore
+            }
+            return next;
+          });
+        }
+      }
+
       const now = performance.now();
       if (now - lastTimeUpdate < 150 && audio.currentTime < audio.duration) return;
       lastTimeUpdate = now;
@@ -756,28 +911,53 @@ export function PlayerProvider({ children }) {
     showToast('Queue cleared');
   }, [showToast]);
 
-  // Likes & Favorites
+  // Likes & Favorites with per-user LocalStorage persistence
   const toggleLike = useCallback((track) => {
     if (!track) return;
-    setLikedTrackIds(prev => {
-      const next = new Set(prev);
-      const isLiked = next.has(track.id);
-      if (isLiked) {
-        next.delete(track.id);
+    const trackKey = track.videoId || (track.id !== undefined && track.id !== null ? String(track.id) : track.title);
+    if (!trackKey) return;
+    const uid = currentUserIdRef.current;
+
+    setLikedTracks(prevTracks => {
+      const exists = prevTracks.some(t => {
+        const k = t.videoId || (t.id !== undefined && t.id !== null ? String(t.id) : t.title);
+        return k === trackKey;
+      });
+      let nextTracks;
+      if (exists) {
+        nextTracks = prevTracks.filter(t => {
+          const k = t.videoId || (t.id !== undefined && t.id !== null ? String(t.id) : t.title);
+          return k !== trackKey;
+        });
         showToast(`Removed "${track.title}" from Liked Songs`);
       } else {
-        next.add(track.id);
+        nextTracks = [track, ...prevTracks];
         showToast(`Added "${track.title}" to Liked Songs`);
       }
-      return next;
+      try {
+        localStorage.setItem(`tunely_liked_tracks_v3_${uid}`, JSON.stringify(nextTracks));
+      } catch {
+        // ignore
+      }
+
+      const nextIds = new Set();
+      nextTracks.forEach(t => {
+        if (t.id !== undefined && t.id !== null) nextIds.add(t.id);
+        if (t.videoId) nextIds.add(t.videoId);
+      });
+      setLikedTrackIds(nextIds);
+
+      return nextTracks;
     });
-    if (track.id) {
-      api.toggleLike(track.id);
+
+    if (track.id && typeof track.id === 'number') {
+      api.toggleLike(track.id).catch(() => {});
     }
   }, [showToast]);
 
-  // Playlists
+  // Per-User Playlists with Tracks Persistence
   const createPlaylist = useCallback(async ({ title, description, cover_url }) => {
+    const uid = currentUserIdRef.current;
     const newPl = {
       id: `pl-${Date.now()}`,
       title: title || 'My Playlist',
@@ -785,42 +965,98 @@ export function PlayerProvider({ children }) {
       cover_url: cover_url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
       tracks: [],
     };
-    setPlaylists(prev => [newPl, ...prev]);
+    setPlaylists(prev => {
+      const next = [newPl, ...prev];
+      try {
+        localStorage.setItem(`tunely_playlists_v3_${uid}`, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
     showToast(`Playlist "${newPl.title}" created`);
 
     const backendRes = await api.createPlaylist({ title: newPl.title, description: newPl.description, cover_url: newPl.cover_url });
     if (backendRes && backendRes.id) {
-      setPlaylists(prev => prev.map(p => p.id === newPl.id ? backendRes : p));
+      setPlaylists(prev => {
+        const next = prev.map(p => p.id === newPl.id ? { ...backendRes, tracks: p.tracks || [] } : p);
+        try {
+          localStorage.setItem(`tunely_playlists_v3_${uid}`, JSON.stringify(next));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
     }
     return newPl;
   }, [showToast]);
 
   const addTrackToPlaylist = useCallback(async (playlistId, track) => {
-    setPlaylists(prev => prev.map(p => {
-      if (p.id === playlistId) {
-        const tracks = p.tracks || [];
-        if (tracks.some(t => t.id === track.id)) return p;
-        return { ...p, tracks: [...tracks, track] };
+    if (!track) return;
+    const uid = currentUserIdRef.current;
+    const trackKey = track.videoId || (track.id !== undefined && track.id !== null ? String(track.id) : track.title);
+
+    setPlaylists(prev => {
+      const next = prev.map(p => {
+        if (p.id === playlistId) {
+          const tracks = p.tracks || [];
+          if (tracks.some(t => {
+            const k = t.videoId || (t.id !== undefined && t.id !== null ? String(t.id) : t.title);
+            return k === trackKey;
+          })) return p;
+          return { ...p, tracks: [...tracks, track] };
+        }
+        return p;
+      });
+      try {
+        localStorage.setItem(`tunely_playlists_v3_${uid}`, JSON.stringify(next));
+      } catch {
+        // ignore
       }
-      return p;
-    }));
+      return next;
+    });
     showToast(`Added to playlist`);
-    await api.addTrackToPlaylist(playlistId, track.id);
+    if (track.id && typeof track.id === 'number') {
+      await api.addTrackToPlaylist(playlistId, track.id).catch(() => {});
+    }
   }, [showToast]);
 
-  const removeTrackFromPlaylist = useCallback(async (playlistId, trackId) => {
-    setPlaylists(prev => prev.map(p => {
-      if (p.id === playlistId) {
-        return { ...p, tracks: (p.tracks || []).filter(t => t.id !== trackId) };
+  const removeTrackFromPlaylist = useCallback(async (playlistId, trackIdOrVideoId) => {
+    const uid = currentUserIdRef.current;
+    setPlaylists(prev => {
+      const next = prev.map(p => {
+        if (p.id === playlistId) {
+          return {
+            ...p,
+            tracks: (p.tracks || []).filter(t => t.id !== trackIdOrVideoId && t.videoId !== trackIdOrVideoId),
+          };
+        }
+        return p;
+      });
+      try {
+        localStorage.setItem(`tunely_playlists_v3_${uid}`, JSON.stringify(next));
+      } catch {
+        // ignore
       }
-      return p;
-    }));
+      return next;
+    });
     showToast(`Removed from playlist`);
-    await api.removeTrackFromPlaylist(playlistId, trackId);
+    if (typeof trackIdOrVideoId === 'number') {
+      await api.removeTrackFromPlaylist(playlistId, trackIdOrVideoId).catch(() => {});
+    }
   }, [showToast]);
 
   const deletePlaylist = useCallback((playlistId) => {
-    setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+    const uid = currentUserIdRef.current;
+    setPlaylists(prev => {
+      const next = prev.filter(p => p.id !== playlistId);
+      try {
+        localStorage.setItem(`tunely_playlists_v3_${uid}`, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
     setActivePlaylistModal(null);
     showToast('Playlist deleted');
   }, [showToast]);
@@ -903,7 +1139,10 @@ export function PlayerProvider({ children }) {
     }
   }, [showToast]);
 
-  const isCurrentTrackLiked = likedTrackIds.has(currentTrack?.id);
+  const isCurrentTrackLiked = useMemo(() => {
+    if (!currentTrack) return false;
+    return likedTrackIds.has(currentTrack.id) || (currentTrack.videoId && likedTrackIds.has(currentTrack.videoId));
+  }, [currentTrack, likedTrackIds]);
 
   const value = {
     currentTrack,
@@ -931,6 +1170,9 @@ export function PlayerProvider({ children }) {
     playlists,
     dailyMixes,
     likedTrackIds,
+    likedTracks,
+    playCounts,
+    totalListeningSeconds,
     downloadedTrackIds,
     isCurrentTrackLiked,
     activeTab,

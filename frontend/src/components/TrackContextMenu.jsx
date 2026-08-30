@@ -36,7 +36,10 @@ export default function TrackContextMenu({ track, onClose, position = { x: 0, y:
   const [showPlaylists, setShowPlaylists] = useState(false);
   const menuRef = useRef(null);
 
-  const isLiked = likedTrackIds.has(track.id);
+  const isLiked = Boolean(
+    (track?.id !== undefined && track?.id !== null && likedTrackIds.has(track.id)) ||
+    (track?.videoId && likedTrackIds.has(track.videoId))
+  );
   const isDownloaded = downloadedTrackIds.has(track.id);
 
   useEffect(() => {

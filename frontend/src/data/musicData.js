@@ -1,189 +1,35 @@
 /**
  * musicData.js
- * Enriched local dataset for Tunely.
- * Used for instant UI rendering and offline resilience.
+ * Clean data structures and taxonomy definitions for Tunely.
+ * All tracks and playlists are dynamically populated live from the user's library and YouTube Music.
  */
 
-export const defaultTrack = {
-  id: 0,
-  title: 'Midnight City',
-  artist: 'M83',
-  artist_name: 'M83',
-  album: 'Hurry Up, We’re Dreaming',
-  album_title: 'Hurry Up, We’re Dreaming',
-  cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-  cover_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-  audio_url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3',
-  duration: '4:03',
-  durationSeconds: 243,
-  genre: 'Dream Pop',
-  plays_count: 1420500,
-  is_liked: true,
-  lyrics: `Waiting in a car\nWaiting for a ride in the dark\nThe night city grows\nLook and see her eyes, they glow\n\nWaiting in a car\nWaiting for a ride in the dark\nDrinking in the lights\nFollowing the neon signs\n\nThe city is my church\nIt wraps me in the sparkling twilight`,
-};
-
-export const recommended = [
-  {
-    id: 1,
-    title: 'Borderline',
-    artist: 'Tame Impala',
-    artist_name: 'Tame Impala',
-    album_title: 'The Slow Rush',
-    cover: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=600&auto=format&fit=crop&q=80',
-    cover_url: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=600&auto=format&fit=crop&q=80',
-    audio_url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=electronic-future-beats-117997.mp3',
-    duration: '3:57',
-    durationSeconds: 237,
-    genre: 'Psychedelic Pop',
-    plays_count: 982000,
-    is_liked: false,
-    lyrics: `Gone a little far, gone a little far this time for something\nHow was I to know? How was I to know this dark will come?\nWill I be known and loved?\nIs there one that I trust?\nStarting to sober up\nHas it been long enough?`,
-  },
-  {
-    id: 2,
-    title: 'King',
-    artist: 'Florence + The Machine',
-    artist_name: 'Florence + The Machine',
-    album_title: 'Dance Fever',
-    cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
-    cover_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
-    audio_url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=tuesday-glitch-ambient-110940.mp3',
-    duration: '3:58',
-    durationSeconds: 238,
-    genre: 'Indie Rock',
-    plays_count: 845000,
-    is_liked: false,
-    lyrics: `We argue in the kitchen about whether to have a child\nAbout the world outside\nAnd the art that takes all night\nI am no mother, I am no bride, I am King`,
-  },
-  {
-    id: 3,
-    title: 'Blinding Lights',
-    artist: 'The Weeknd',
-    artist_name: 'The Weeknd',
-    album_title: 'After Hours',
-    cover: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
-    cover_url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
-    audio_url: 'https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792cb.mp3?filename=the-beat-of-nature-122841.mp3',
-    duration: '3:20',
-    durationSeconds: 200,
-    genre: 'Synthwave / R&B',
-    plays_count: 3240000,
-    is_liked: true,
-    lyrics: `Yeah\nI've been on my own for long enough\nMaybe you can show me how to love, maybe\nI'm going through withdrawals\nYou don't even have to do too much\nYou can turn me on with just a touch, baby`,
-  },
-  {
-    id: 4,
-    title: 'Nude',
-    artist: 'Radiohead',
-    artist_name: 'Radiohead',
-    album_title: 'In Rainbows',
-    cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&auto=format&fit=crop&q=80',
-    cover_url: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&auto=format&fit=crop&q=80',
-    audio_url: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_bb630cc098.mp3?filename=ambient-piano-amp-strings-10711.mp3',
-    duration: '4:15',
-    durationSeconds: 255,
-    genre: 'Art Rock',
-    plays_count: 720000,
-    is_liked: false,
-    lyrics: `Don't get any big ideas\nThey're not gonna happen\nYou paint yourself white\nAnd fill up with noise\nThere'll be something missing`,
-  },
-];
-
-export const recentlyPlayed = [
-  {
-    id: 5,
-    title: '22 (OVER S∞∞N)',
-    artist: 'Bon Iver',
-    artist_name: 'Bon Iver',
-    cover: 'https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=600&auto=format&fit=crop&q=80',
-    cover_url: 'https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=600&auto=format&fit=crop&q=80',
-    audio_url: 'https://cdn.pixabay.com/download/audio/2022/11/06/audio_c35f997cb6.mp3?filename=chill-abstract-intention-12099.mp3',
-    duration: '3:57',
-    durationSeconds: 237,
-    genre: 'Indie Folk',
-    plays_count: 610000,
-    is_liked: false,
-    lyrics: `It might be over soon\nTwo, two\nWhere you gonna look for confirmation?\nAnd if it's harvest time\nWho's gonna hold up the light?`,
-  },
-  {
-    id: 6,
-    title: 'Kyoto',
-    artist: 'Phoebe Bridgers',
-    artist_name: 'Phoebe Bridgers',
-    cover: 'https://images.unsplash.com/photo-1520523839898-50712825e3a7?w=600&auto=format&fit=crop&q=80',
-    cover_url: 'https://images.unsplash.com/photo-1520523839898-50712825e3a7?w=600&auto=format&fit=crop&q=80',
-    audio_url: 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c32c4d682e.mp3?filename=lifelike-126735.mp3',
-    duration: '3:05',
-    durationSeconds: 185,
-    genre: 'Indie Rock',
-    plays_count: 930000,
-    is_liked: false,
-    lyrics: `Day off in Kyoto\nGot bored at the temple\nLooked around at the 7-Eleven\nThe band took the afternoon off\nI'm gonna kill you\nIf you don't beat me to it`,
-  },
-  {
-    id: 7,
-    title: 'Pink + White',
-    artist: 'Frank Ocean',
-    artist_name: 'Frank Ocean',
-    album_title: 'Blonde',
-    cover: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&auto=format&fit=crop&q=80',
-    cover_url: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&auto=format&fit=crop&q=80',
-    audio_url: 'https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3?filename=smoke-143172.mp3',
-    duration: '3:04',
-    durationSeconds: 184,
-    genre: 'R&B / Soul',
-    plays_count: 2150000,
-    is_liked: true,
-    lyrics: `That's the way everyday goes\nEvery time we have no control\nIf the sky is pink and white\nIf the ground is black and yellow\nIt's the same way you showed me`,
-  },
-  {
-    id: 8,
-    title: 'Green Light',
-    artist: 'Lorde',
-    artist_name: 'Lorde',
-    cover: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
-    cover_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
-    audio_url: 'https://cdn.pixabay.com/download/audio/2022/04/27/audio_3025272a8c.mp3?filename=inspire-ambient-111327.mp3',
-    duration: '3:53',
-    durationSeconds: 233,
-    genre: 'Electropop',
-    plays_count: 1120000,
-    is_liked: false,
-    lyrics: `I do my makeup in somebody else's car\nWe order different drinks at the same bar\nI know about what you did and I wanna scream the truth\nShe thinks you love the beach, you're such a damn liar`,
-  },
-];
-
+export const defaultTrack = null;
+export const recommended = [];
+export const recentlyPlayed = [];
 export const initialQueue = [];
-
-export const allTracks = [
-  defaultTrack,
-  ...recommended,
-  ...recentlyPlayed,
-];
+export const allTracks = [];
+export const initialPlaylists = [];
 
 export const genresList = [
-  { name: 'All', color: 'from-purple-600 to-indigo-600' },
-  { name: 'Psychedelic Pop', color: 'from-pink-500 to-rose-500' },
-  { name: 'Dream Pop', color: 'from-violet-500 to-purple-600' },
-  { name: 'Indie Rock', color: 'from-amber-500 to-orange-600' },
-  { name: 'Synthwave / R&B', color: 'from-cyan-500 to-blue-600' },
-  { name: 'Art Rock', color: 'from-emerald-500 to-teal-600' },
-  { name: 'Disco / Funk', color: 'from-fuchsia-500 to-pink-600' },
+  { name: 'All', color: 'from-neutral-700 to-neutral-800' },
+  { name: 'Pop', color: 'from-neutral-700 to-neutral-800' },
+  { name: 'Hip-Hop', color: 'from-neutral-700 to-neutral-800' },
+  { name: 'Rock', color: 'from-neutral-700 to-neutral-800' },
+  { name: 'R&B / Soul', color: 'from-neutral-700 to-neutral-800' },
+  { name: 'Electronic / Dance', color: 'from-neutral-700 to-neutral-800' },
+  { name: 'Indie & Alternative', color: 'from-neutral-700 to-neutral-800' },
+  { name: 'Acoustic / Folk', color: 'from-neutral-700 to-neutral-800' },
+  { name: 'Ambient / Chill', color: 'from-neutral-700 to-neutral-800' },
 ];
 
-export const initialPlaylists = [
-  {
-    id: 'p1',
-    title: 'Late Night Vibrations',
-    description: 'Curated dreamy synths and late-night aesthetic frequencies.',
-    cover_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-    tracks: [defaultTrack, recommended[0], recommended[2]],
-  },
-  {
-    id: 'p2',
-    title: 'Indie & Melancholy',
-    description: 'Deep emotional lyrics, acoustic echoes, and sublime soundscapes.',
-    cover_url: 'https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=600&auto=format&fit=crop&q=80',
-    tracks: [recommended[1], recommended[3], recentlyPlayed[0]],
-  },
+export const moodsList = [
+  'All',
+  'Relax',
+  'Energy Boost',
+  'Workout',
+  'Focus / Study',
+  'Late Night',
+  'Party',
+  'Romance',
 ];

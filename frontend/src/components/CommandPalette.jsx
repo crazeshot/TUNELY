@@ -15,7 +15,6 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { usePlayer } from '../context/usePlayer';
-import { allTracks } from '../data/musicData';
 import { api } from '../services/api';
 
 export default function CommandPalette() {
@@ -23,6 +22,8 @@ export default function CommandPalette() {
     isCommandPaletteOpen,
     setIsCommandPaletteOpen,
     playTrack,
+    likedTracks,
+    history,
     toggleSlowedReverb,
     toggleNightcore,
     setIsEqualizerOpen,
@@ -155,27 +156,36 @@ export default function CommandPalette() {
     },
   ], [query, setActiveTab, setIsVisualizerOpen, setIsEqualizerOpen, toggleSlowedReverb, toggleNightcore, setIsSleepTimerOpen, clearQueue]);
 
-  // Catalog tracks match
-  const filteredCatalogTracks = useMemo(() => {
+  // User library tracks match (Liked songs & recent history)
+  const filteredLibraryTracks = useMemo(() => {
     if (!query.trim()) return [];
-    return allTracks
-      .filter(
-        (t) =>
-          t.title.toLowerCase().includes(query.toLowerCase()) ||
-          (t.artist_name || t.artist).toLowerCase().includes(query.toLowerCase()) ||
-          (t.genre || '').toLowerCase().includes(query.toLowerCase())
-      )
-      .map((t) => ({
-        id: `track-${t.id}`,
-        title: t.title,
-        subtitle: `${t.artist_name || t.artist} • ${t.genre || 'Song'}`,
-        category: 'Catalog Song',
-        icon: Play,
-        cover: t.cover_url || t.cover,
-        track: t,
-        run: () => playTrack(t),
-      }));
-  }, [query, playTrack]);
+    const pool = [...(likedTracks || []), ...(history || [])];
+    const seen = new Set();
+    const matches = [];
+
+    pool.forEach((t) => {
+      if (!t) return;
+      const key = t.videoId || t.id;
+      if (seen.has(key)) return;
+      seen.add(key);
+
+      const titleMatch = t.title?.toLowerCase().includes(query.toLowerCase());
+      const artistMatch = (t.artist_name || t.artist || '').toLowerCase().includes(query.toLowerCase());
+      if (titleMatch || artistMatch) {
+        matches.push({
+          id: `lib-${key}`,
+          title: t.title,
+          subtitle: `${t.artist_name || t.artist} • Your Library`,
+          category: 'Library',
+          icon: Play,
+          cover: t.cover_url || t.cover,
+          track: t,
+          run: () => playTrack(t),
+        });
+      }
+    });
+    return matches.slice(0, 5);
+  }, [query, likedTracks, history, playTrack]);
 
   // YouTube Music search results formatted
   const formattedYtmTracks = useMemo(() => {
@@ -203,8 +213,8 @@ export default function CommandPalette() {
     if (!query.trim()) {
       return actions;
     }
-    return [...formattedYtmTracks, ...filteredCatalogTracks, ...filteredActions];
-  }, [query, formattedYtmTracks, filteredCatalogTracks, filteredActions, actions]);
+    return [...formattedYtmTracks, ...filteredLibraryTracks, ...filteredActions];
+  }, [query, formattedYtmTracks, filteredLibraryTracks, filteredActions, actions]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'ArrowDown') {

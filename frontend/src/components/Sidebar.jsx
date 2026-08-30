@@ -5,7 +5,7 @@ import { usePlayer } from '../context/usePlayer';
 import { useAuth } from '../context/useAuth';
 
 export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
-  const { playlists, activeTab, setActiveTab, likedTrackIds, setIsGroupSessionOpen, setActivePlaylistModal } = usePlayer();
+  const { playlists, activeTab, setActiveTab, likedTracks, setIsGroupSessionOpen, setActivePlaylistModal } = usePlayer();
   const { setIsWrappedOpen } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -106,15 +106,19 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
             </button>
 
             <button
-              onClick={() => setActiveTab('library')}
-              className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
+              onClick={() => setActiveTab('liked')}
+              className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium transition-all ${
+                activeTab === 'liked'
+                  ? 'bg-white/15 text-white shadow-sm'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
             >
               <span className="flex items-center gap-3">
                 <Heart size={15} className="text-white fill-white/20" />
                 <span>Liked Songs</span>
               </span>
               <span className="text-[10px] bg-white/10 text-white/90 px-2 py-0.5 rounded-full font-mono">
-                {likedTrackIds.size}
+                {likedTracks.length}
               </span>
             </button>
 

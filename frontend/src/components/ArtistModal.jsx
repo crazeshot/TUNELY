@@ -1,6 +1,8 @@
-import { X, Play, BadgeCheck, Users } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Play, BadgeCheck, Users, Music } from 'lucide-react';
 import { usePlayer } from '../context/usePlayer';
-import { allTracks } from '../data/musicData';
+import { api } from '../services/api';
+import { getCoverUrl, handleCoverError } from '../utils/coverUrl';
 
 export default function ArtistModal() {
   const {
@@ -10,16 +12,46 @@ export default function ArtistModal() {
     addToQueue,
   } = usePlayer();
 
+  const [artistTracks, setArtistTracks] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const artistName = activeArtistModal?.name || activeArtistModal?.artist_name || activeArtistModal?.artist;
+
+  useEffect(() => {
+    if (!artistName) return;
+    let isMounted = true;
+
+    const searchFn = api.searchYTM || api.searchYtm;
+    if (typeof searchFn === 'function') {
+      const timer = setTimeout(() => {
+        if (isMounted) setIsLoading(true);
+      }, 0);
+
+      searchFn.call(api, artistName, 10).then((tracks) => {
+        if (isMounted) {
+          clearTimeout(timer);
+          setArtistTracks(tracks || []);
+          setIsLoading(false);
+        }
+      }).catch(() => {
+        if (isMounted) {
+          clearTimeout(timer);
+          setIsLoading(false);
+        }
+      });
+
+      return () => {
+        isMounted = false;
+        clearTimeout(timer);
+      };
+    }
+  }, [artistName]);
+
   if (!activeArtistModal) return null;
 
-  const artistName = activeArtistModal.name || activeArtistModal.artist_name || activeArtistModal.artist;
-  const artistTracks = allTracks.filter(
-    (t) => (t.artist_name || t.artist).toLowerCase() === artistName.toLowerCase()
-  );
-
   const avatar = activeArtistModal.avatar_url || activeArtistModal.avatar || activeArtistModal.cover_url || activeArtistModal.cover;
-  const listeners = activeArtistModal.monthly_listeners || '18.5M';
-  const bio = activeArtistModal.bio || `${artistName} is an internationally acclaimed recording artist known for genre-defying production, emotive vocals, and sonic exploration.`;
+  const listeners = activeArtistModal.monthly_listeners || 'Live Listeners';
+  const bio = activeArtistModal.bio || `${artistName} is a featured recording artist on Tunely, delivering dynamic productions, emotive arrangements, and high-fidelity sonic experiences.`;
 
   return (
     <div
@@ -64,7 +96,7 @@ export default function ArtistModal() {
               </h2>
               <div className="flex items-center gap-2 text-xs text-white/60 mt-1">
                 <Users size={13} />
-                <span>{listeners} monthly listeners</span>
+                <span>{listeners}</span>
               </div>
             </div>
 
@@ -74,7 +106,7 @@ export default function ArtistModal() {
                 className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-neutral-200 text-black text-xs font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 transition-all"
               >
                 <Play size={14} className="fill-black" />
-                <span>Play Discography</span>
+                <span>Play Popular</span>
               </button>
             )}
           </div>
@@ -98,12 +130,17 @@ export default function ArtistModal() {
               Popular Tracks
             </h3>
             <div className="space-y-1.5">
-              {artistTracks.length === 0 ? (
-                <p className="text-xs text-white/40 italic">No catalog tracks available.</p>
+              {isLoading ? (
+                <div className="p-6 text-center text-xs text-white/50">Loading tracks...</div>
+              ) : artistTracks.length === 0 ? (
+                <div className="p-6 text-center text-xs text-white/40">
+                  <Music size={24} className="mx-auto mb-2 opacity-40" />
+                  <span>No tracks found for {artistName}.</span>
+                </div>
               ) : (
                 artistTracks.map((t, idx) => (
                   <div
-                    key={t.id}
+                    key={t.videoId || t.id || idx}
                     className="flex items-center justify-between p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-colors cursor-pointer group"
                     onClick={() => playTrack(t)}
                   >
@@ -112,13 +149,14 @@ export default function ArtistModal() {
                         {idx + 1}
                       </span>
                       <img
-                        src={t.cover_url || t.cover}
+                        src={getCoverUrl(t)}
                         alt={t.title}
+                        onError={(e) => handleCoverError(e, t)}
                         className="w-10 h-10 rounded-xl object-cover"
                       />
                       <div className="truncate">
                         <p className="text-xs font-semibold text-white truncate">{t.title}</p>
-                        <p className="text-[11px] text-white/50 truncate">{t.genre || 'Single'}</p>
+                        <p className="text-[11px] text-white/50 truncate">{t.artist_name || t.artist || artistName}</p>
                       </div>
                     </div>
 

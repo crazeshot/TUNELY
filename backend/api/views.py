@@ -198,9 +198,16 @@ def me_view(request):
 @permission_classes([AllowAny])
 def wrapped_view(request):
     """
-    Generates rich 'Tunely Wrapped' listening analytics & music personality.
+    Generates rich 'Tunely Wrapped' listening analytics & music personality for the active user.
     """
     user = request.user if request.user.is_authenticated else None
+    
+    minutes = 0
+    streak_days = 1
+    if user and hasattr(user, 'profile'):
+        minutes = int(user.profile.total_minutes_listened)
+        streak_days = max(1, getattr(user.profile, 'listening_streak', 1))
+
     top_tracks = Track.objects.order_by('-plays_count')[:5]
     top_artists = Artist.objects.all()[:3]
     top_genres = (
@@ -209,12 +216,8 @@ def wrapped_view(request):
         .order_by('-count')[:3]
     )
 
-    minutes = 4820
-    if user and hasattr(user, 'profile'):
-        minutes = max(user.profile.total_minutes_listened, 2400)
-
     personalities = [
-        {'title': 'Atmospheric Voyager', 'desc': 'You dwell in ethereal soundscapes, dream pop frequencies, and late-night synths.'},
+        {'title': 'Atmospheric Voyager', 'desc': 'You dwell in ethereal soundscapes, high dynamic range, and authentic acoustic depths.'},
         {'title': 'Neo-Psychedelic Explorer', 'desc': 'Your ears gravitate toward intricate instrumentation and sonic journeys.'},
         {'title': 'Audiophile Architect', 'desc': 'You appreciate spatial depth, high dynamic range, and flawless acoustic resonance.'},
     ]
@@ -222,12 +225,12 @@ def wrapped_view(request):
     return Response({
         'year': 2026,
         'total_minutes_streamed': minutes,
-        'top_genres': [g['genre'] for g in top_genres],
+        'top_genres': [g['genre'] for g in top_genres if g.get('genre')],
         'top_tracks': TrackSerializer(top_tracks, many=True).data,
         'top_artists': ArtistSerializer(top_artists, many=True).data,
         'music_personality': personalities[0],
-        'listening_streak_days': 42,
-        'vibes_summary': 'Dreamy, Late-Night, Ambient, Sophisticated',
+        'listening_streak_days': streak_days,
+        'vibes_summary': 'Dynamic, High-Fidelity, Ethereal, Sophisticated',
     })
 
 

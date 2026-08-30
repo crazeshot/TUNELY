@@ -11,7 +11,10 @@ export default function AlbumCard({ track, delay = 0 }) {
   const isCurrent = (currentTrack?.videoId && track?.videoId)
     ? currentTrack.videoId === track.videoId
     : (currentTrack?.id !== undefined && track?.id !== undefined && currentTrack.id === track.id);
-  const isLiked = likedTrackIds.has(track.id);
+  const isLiked = Boolean(
+    (track?.id !== undefined && track?.id !== null && likedTrackIds.has(track.id)) ||
+    (track?.videoId && likedTrackIds.has(track.videoId))
+  );
 
   const handleCardClick = () => {
     if (isCurrent) {

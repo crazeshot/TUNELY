@@ -6,7 +6,7 @@ import BottomNav from './BottomNav';
 import AudioCanvasVisualizer from './AudioCanvasVisualizer';
 import SettingsPage from './SettingsPage';
 import ProfileDropdown from './ProfileDropdown';
-import { recommended, recentlyPlayed, allTracks, genresList } from '../data/musicData';
+import { genresList } from '../data/musicData';
 import { usePlayer } from '../context/usePlayer';
 import { useAuth } from '../context/useAuth';
 import { api } from '../services/api';
@@ -31,6 +31,7 @@ export default function MainContent() {
     playTrack,
     playlists,
     history,
+    likedTracks,
     likedTrackIds,
     dailyMixes,
     addToQueue,
@@ -109,8 +110,8 @@ export default function MainContent() {
   }, [searchQuery, handleYtmSearch]);
 
   const effectiveTracks = useMemo(() => {
-    return dbTracks.length > 0 ? dbTracks : allTracks;
-  }, [dbTracks]);
+    return dbTracks.length > 0 ? dbTracks : ytmTrending;
+  }, [dbTracks, ytmTrending]);
 
   // Filter Catalog Tracks
   const filteredCatalog = useMemo(() => {
@@ -118,7 +119,7 @@ export default function MainContent() {
       const matchesSearch =
         !searchQuery ||
         t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.artist_name || t.artist).toLowerCase().includes(searchQuery.toLowerCase());
+        (t.artist_name || t.artist || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesGenre = activeGenre === 'All' || t.genre === activeGenre;
       const matchesMood = activeMood === 'All' || t.mood === activeMood || t.mood === 'All';
       return matchesSearch && matchesGenre && matchesMood;
@@ -129,44 +130,33 @@ export default function MainContent() {
     return ytmSearchResults.length > 0 ? ytmSearchResults : [];
   }, [ytmSearchResults]);
 
-  const likedTracks = useMemo(() => {
-    return effectiveTracks.filter((t) => likedTrackIds.has(t.id));
-  }, [effectiveTracks, likedTrackIds]);
-
   const recList = useMemo(() => {
-    return recommended.filter((t) => {
-      const matchesGenre = activeGenre === 'All' || t.genre === activeGenre;
-      const matchesMood = activeMood === 'All' || t.mood === activeMood;
-      return matchesGenre && matchesMood;
-    });
-  }, [activeGenre, activeMood]);
+    return ytmTrending.length > 0 ? ytmTrending.slice(0, 12) : [];
+  }, [ytmTrending]);
 
   const recentList = useMemo(() => {
-    return recentlyPlayed.filter((t) => {
-      const matchesGenre = activeGenre === 'All' || t.genre === activeGenre;
-      return matchesGenre;
-    });
-  }, [activeGenre]);
+    return history || [];
+  }, [history]);
 
   const featuredTrack = useMemo(() => {
-    return effectiveTracks[0] || allTracks[0];
-  }, [effectiveTracks]);
+    return ytmTrending[0] || history[0] || null;
+  }, [ytmTrending, history]);
 
   const popularArtists = useMemo(() => {
     const map = new Map();
-    effectiveTracks.forEach((t) => {
+    [...ytmTrending, ...(history || [])].forEach((t) => {
       const name = t.artist_name || t.artist;
       if (name && !map.has(name)) {
         map.set(name, {
           name,
           avatar: t.cover_url || t.cover,
-          genre: t.genre,
-          monthly_listeners: '21.4M',
+          genre: t.genre || 'Trending',
+          monthly_listeners: 'Live',
         });
       }
     });
     return Array.from(map.values()).slice(0, 6);
-  }, [effectiveTracks]);
+  }, [ytmTrending, history]);
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
