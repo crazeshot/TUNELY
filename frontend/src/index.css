@@ -1,18 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import './App.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Official gg sans Web Fonts */
+/* Local gg sans Font support with graceful modern fallback */
 @font-face {
   font-family: 'gg sans';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: local('gg sans Normal'), local('gg sans Regular'), local('ggsans-Normal'), local('ggsans'),
-       url('https://cdn.jsdelivr.net/gh/mshaugh/discord-assets@main/ggsans-normal.woff2') format('woff2');
+  src: local('gg sans Normal'), local('gg sans Regular'), local('ggsans-Normal'), local('ggsans');
 }
 
 @font-face {
@@ -20,8 +19,7 @@
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: local('gg sans Medium'), local('ggsans-Medium'),
-       url('https://cdn.jsdelivr.net/gh/mshaugh/discord-assets@main/ggsans-medium.woff2') format('woff2');
+  src: local('gg sans Medium'), local('ggsans-Medium');
 }
 
 @font-face {
@@ -29,8 +27,7 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: local('gg sans Semibold'), local('ggsans-Semibold'),
-       url('https://cdn.jsdelivr.net/gh/mshaugh/discord-assets@main/ggsans-semibold.woff2') format('woff2');
+  src: local('gg sans Semibold'), local('ggsans-Semibold');
 }
 
 @font-face {
@@ -38,8 +35,7 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: local('gg sans Bold'), local('ggsans-Bold'),
-       url('https://cdn.jsdelivr.net/gh/mshaugh/discord-assets@main/ggsans-bold.woff2') format('woff2');
+  src: local('gg sans Bold'), local('ggsans-Bold');
 }
 
 @font-face {
@@ -47,8 +43,7 @@
   font-style: normal;
   font-weight: 800;
   font-display: swap;
-  src: local('gg sans ExtraBold'), local('ggsans-ExtraBold'),
-       url('https://cdn.jsdelivr.net/gh/mshaugh/discord-assets@main/ggsans-extrabold.woff2') format('woff2');
+  src: local('gg sans ExtraBold'), local('ggsans-ExtraBold');
 }
 
 * {

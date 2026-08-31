@@ -15,7 +15,22 @@ export function AuthProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('tunely_auth_token'));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isWrappedOpen, setIsWrappedOpen] = useState(false);
+  const [authTab, setAuthTab] = useState('login'); // 'login' | 'register'
   const [authError, setAuthError] = useState(null);
+
+  const openAuth = useCallback((tab = 'login') => {
+    setAuthTab(tab);
+    setAuthError(null);
+    setIsAuthModalOpen(true);
+  }, []);
+
+  const openLogin = useCallback(() => {
+    openAuth('login');
+  }, [openAuth]);
+
+  const openRegister = useCallback(() => {
+    openAuth('register');
+  }, [openAuth]);
 
   // Load user profile on mount or token change
   useEffect(() => {
@@ -76,11 +91,11 @@ export function AuthProvider({ children }) {
     setIsLoggedIn(false);
     setUser({
       is_guest: true,
-      username: 'Guest Audiophile',
-      display_name: 'Guest Audiophile',
-      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+      username: 'Guest',
+      display_name: 'Guest',
+      avatar_url: '',
       bio: 'Streaming on Tunely Guest Mode',
-      total_minutes_listened: 1420,
+      total_minutes_listened: 0,
     });
   }, []);
 
@@ -98,6 +113,11 @@ export function AuthProvider({ children }) {
     isLoggedIn,
     isAuthModalOpen,
     setIsAuthModalOpen,
+    authTab,
+    setAuthTab,
+    openAuth,
+    openLogin,
+    openRegister,
     isWrappedOpen,
     setIsWrappedOpen,
     authError,
