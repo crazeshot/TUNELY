@@ -3,7 +3,7 @@ import { X, User, Lock, Mail, Sparkles, LogIn, UserPlus, ShieldAlert } from 'luc
 import { useAuth } from '../context/useAuth';
 
 export default function AuthModal() {
-  const { isAuthModalOpen, setIsAuthModalOpen, login, register, authError, setAuthError, authTab, setAuthTab } = useAuth();
+  const { isAuthModalOpen, setIsAuthModalOpen, login, register, authError, setAuthError, authTab } = useAuth();
   const [tab, setTab] = useState(authTab || 'login');
 
   useEffect(() => {

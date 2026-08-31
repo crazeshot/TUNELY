@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   SkipBack,
   Play,
@@ -14,15 +14,15 @@ import {
   Moon,
   Sparkles,
   Headphones,
-} from 'lucide-react';
-import { usePlayer } from '../context/usePlayer';
-import { getCoverUrl, handleCoverError } from '../utils/coverUrl';
+} from "lucide-react";
+import { usePlayer } from "../context/usePlayer";
+import { getCoverUrl, handleCoverError } from "../utils/coverUrl";
 
 function formatTime(secs) {
   const s = Math.floor(secs || 0);
   const m = Math.floor(s / 60);
   const rem = s % 60;
-  return `${m}:${String(rem).padStart(2, '0')}`;
+  return `${m}:${String(rem).padStart(2, "0")}`;
 }
 
 export default function PlayerBar({ collapsed = false }) {
@@ -69,10 +69,10 @@ export default function PlayerBar({ collapsed = false }) {
       <div
         className="w-[72px] rounded-3xl p-2 flex flex-col items-center gap-2 transition-all duration-300 shadow-2xl relative group"
         style={{
-          background: 'rgba(18, 20, 26, 0.96)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          backdropFilter: 'blur(30px)',
-          boxShadow: `0 10px 30px ${themeColors.glow || 'rgba(255, 255, 255, 0.15)'}`,
+          background: "rgba(18, 20, 26, 0.96)",
+          border: "1px solid rgba(255, 255, 255, 0.15)",
+          backdropFilter: "blur(30px)",
+          boxShadow: `0 10px 30px ${themeColors.glow || "rgba(255, 255, 255, 0.15)"}`,
         }}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
@@ -81,12 +81,21 @@ export default function PlayerBar({ collapsed = false }) {
         {showTooltip && (
           <div
             className="absolute left-full ml-3 top-1/2 -translate-y-1/2 p-3 rounded-2xl border border-white/20 shadow-2xl whitespace-nowrap z-50 animate-fade-in pointer-events-none"
-            style={{ background: 'rgba(14, 16, 22, 0.98)', backdropFilter: 'blur(20px)' }}
+            style={{
+              background: "rgba(14, 16, 22, 0.98)",
+              backdropFilter: "blur(20px)",
+            }}
           >
-            <p className="text-xs font-bold text-white max-w-[200px] truncate">{currentTrack.title}</p>
-            <p className="text-[11px] text-white/50 max-w-[200px] truncate mt-0.5">{currentTrack.artist_name || currentTrack.artist}</p>
+            <p className="text-xs font-bold text-white max-w-[200px] truncate">
+              {currentTrack.title}
+            </p>
+            <p className="text-[11px] text-white/50 max-w-[200px] truncate mt-0.5">
+              {currentTrack.artist_name || currentTrack.artist}
+            </p>
             <div className="flex items-center gap-2 text-[10px] font-mono text-white/40 mt-1">
-              <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
+              <span>
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
             </div>
           </div>
         )}
@@ -94,7 +103,9 @@ export default function PlayerBar({ collapsed = false }) {
         {/* Larger 56px Cover Art with Visualizer trigger */}
         <div
           className={`relative group/cover cursor-pointer w-14 h-14 rounded-2xl overflow-hidden transition-all duration-300 shrink-0 ${
-            isPlaying ? 'ring-2 ring-white/60 shadow-[0_0_16px_rgba(255,255,255,0.35)]' : ''
+            isPlaying
+              ? "ring-2 ring-white/60 shadow-[0_0_16px_rgba(255,255,255,0.35)]"
+              : ""
           }`}
           onClick={() => setIsVisualizerOpen(true)}
           title={`${currentTrack.title} - ${currentTrack.artist_name || currentTrack.artist}`}
@@ -118,9 +129,13 @@ export default function PlayerBar({ collapsed = false }) {
         <button
           onClick={togglePlay}
           className="w-11 h-11 rounded-full bg-white hover:bg-neutral-200 text-black flex items-center justify-center shadow-[0_0_18px_rgba(255,255,255,0.45)] hover:scale-105 active:scale-95 transition-all shrink-0"
-          title={isPlaying ? 'Pause' : 'Play'}
+          title={isPlaying ? "Pause" : "Play"}
         >
-          {isPlaying ? <Pause size={17} /> : <Play size={17} className="ml-0.5" />}
+          {isPlaying ? (
+            <Pause size={17} />
+          ) : (
+            <Play size={17} className="ml-0.5" />
+          )}
         </button>
 
         {/* Micro Transport controls (Prev & Next) */}
@@ -155,11 +170,16 @@ export default function PlayerBar({ collapsed = false }) {
         <button
           onClick={() => toggleLike(currentTrack)}
           className={`w-7 h-7 rounded-xl bg-white/5 hover:bg-white/15 flex items-center justify-center transition-transform hover:scale-110 ${
-            isCurrentTrackLiked ? 'text-white' : 'text-white/40 hover:text-white'
+            isCurrentTrackLiked
+              ? "text-white"
+              : "text-white/40 hover:text-white"
           }`}
-          title={isCurrentTrackLiked ? 'Unlike' : 'Like'}
+          title={isCurrentTrackLiked ? "Unlike" : "Like"}
         >
-          <Heart size={13} className={isCurrentTrackLiked ? 'fill-white' : ''} />
+          <Heart
+            size={13}
+            className={isCurrentTrackLiked ? "fill-white" : ""}
+          />
         </button>
       </div>
     );
@@ -170,10 +190,10 @@ export default function PlayerBar({ collapsed = false }) {
     <div
       className="w-[260px] rounded-3xl p-3.5 flex flex-col gap-3 transition-all duration-300 shadow-2xl relative"
       style={{
-        background: 'rgba(18, 20, 26, 0.96)',
-        border: '1px solid rgba(255, 255, 255, 0.15)',
-        backdropFilter: 'blur(30px)',
-        boxShadow: `0 10px 30px ${themeColors.glow || 'rgba(255, 255, 255, 0.15)'}`,
+        background: "rgba(18, 20, 26, 0.96)",
+        border: "1px solid rgba(255, 255, 255, 0.15)",
+        backdropFilter: "blur(30px)",
+        boxShadow: `0 10px 30px ${themeColors.glow || "rgba(255, 255, 255, 0.15)"}`,
       }}
     >
       {/* Top Section: Larger 62px Cover Art + Title + Controls */}
@@ -181,10 +201,12 @@ export default function PlayerBar({ collapsed = false }) {
         {/* Larger 62px Album Art */}
         <div
           className={`relative group cursor-pointer shrink-0 rounded-2xl overflow-hidden transition-all duration-300 ${
-            isPlaying ? 'shadow-[0_0_18px_rgba(255,255,255,0.35)] ring-1 ring-white/40' : ''
+            isPlaying
+              ? "shadow-[0_0_18px_rgba(255,255,255,0.35)] ring-1 ring-white/40"
+              : ""
           }`}
           onClick={() => setIsVisualizerOpen(true)}
-          style={{ width: '62px', height: '62px' }}
+          style={{ width: "62px", height: "62px" }}
         >
           <img
             src={getCoverUrl(currentTrack)}
@@ -220,11 +242,16 @@ export default function PlayerBar({ collapsed = false }) {
         <button
           onClick={() => toggleLike(currentTrack)}
           className={`shrink-0 p-1.5 rounded-full hover:bg-white/10 transition-transform hover:scale-110 ${
-            isCurrentTrackLiked ? 'text-white' : 'text-white/30 hover:text-white/80'
+            isCurrentTrackLiked
+              ? "text-white"
+              : "text-white/30 hover:text-white/80"
           }`}
-          title={isCurrentTrackLiked ? 'Remove from Liked' : 'Save to Liked'}
+          title={isCurrentTrackLiked ? "Remove from Liked" : "Save to Liked"}
         >
-          <Heart size={16} className={isCurrentTrackLiked ? 'fill-white' : ''} />
+          <Heart
+            size={16}
+            className={isCurrentTrackLiked ? "fill-white" : ""}
+          />
         </button>
       </div>
 
@@ -233,7 +260,9 @@ export default function PlayerBar({ collapsed = false }) {
         <button
           onClick={toggleShuffle}
           className={`p-1.5 rounded-full transition-colors ${
-            isShuffle ? 'text-white font-bold bg-white/10' : 'text-white/30 hover:text-white'
+            isShuffle
+              ? "text-white font-bold bg-white/10"
+              : "text-white/30 hover:text-white"
           }`}
           title="Shuffle"
         >
@@ -253,9 +282,13 @@ export default function PlayerBar({ collapsed = false }) {
           <button
             onClick={togglePlay}
             className="w-10 h-10 rounded-full bg-white hover:bg-neutral-200 text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.4)] hover:scale-105 transition-all"
-            title={isPlaying ? 'Pause' : 'Play'}
+            title={isPlaying ? "Pause" : "Play"}
           >
-            {isPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+            {isPlaying ? (
+              <Pause size={16} />
+            ) : (
+              <Play size={16} className="ml-0.5" />
+            )}
           </button>
 
           <button
@@ -270,7 +303,9 @@ export default function PlayerBar({ collapsed = false }) {
         <button
           onClick={cycleRepeat}
           className={`p-1.5 rounded-full transition-colors ${
-            repeatMode !== 'off' ? 'text-white font-bold bg-white/10' : 'text-white/30 hover:text-white'
+            repeatMode !== "off"
+              ? "text-white font-bold bg-white/10"
+              : "text-white/30 hover:text-white"
           }`}
           title={`Repeat: ${repeatMode}`}
         >
@@ -309,7 +344,9 @@ export default function PlayerBar({ collapsed = false }) {
         <button
           onClick={toggleSpatialAudio}
           className={`p-1.5 rounded-lg transition-colors ${
-            isSpatialAudio ? 'text-white font-bold bg-white/10' : 'hover:text-white'
+            isSpatialAudio
+              ? "text-white font-bold bg-white/10"
+              : "hover:text-white"
           }`}
           title="3D Spatial Audio"
         >
@@ -320,7 +357,9 @@ export default function PlayerBar({ collapsed = false }) {
         <button
           onClick={toggleSlowedReverb}
           className={`p-1.5 rounded-lg transition-colors ${
-            isSlowedReverb ? 'text-white font-bold bg-white/10' : 'hover:text-white'
+            isSlowedReverb
+              ? "text-white font-bold bg-white/10"
+              : "hover:text-white"
           }`}
           title="Slowed + Reverb DSP"
         >
@@ -340,7 +379,9 @@ export default function PlayerBar({ collapsed = false }) {
         <button
           onClick={() => setIsSleepTimerOpen(true)}
           className={`p-1.5 rounded-lg transition-colors ${
-            sleepTimerSeconds !== null ? 'text-white font-bold bg-white/10' : 'hover:text-white'
+            sleepTimerSeconds !== null
+              ? "text-white font-bold bg-white/10"
+              : "hover:text-white"
           }`}
           title="Sleep Timer"
         >
@@ -356,15 +397,22 @@ export default function PlayerBar({ collapsed = false }) {
           <button
             onClick={toggleMute}
             className="p-1.5 rounded-lg hover:text-white transition-colors"
-            title={isMuted ? 'Unmute' : 'Mute'}
+            title={isMuted ? "Unmute" : "Mute"}
           >
-            {isMuted || volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            {isMuted || volume === 0 ? (
+              <VolumeX size={14} />
+            ) : (
+              <Volume2 size={14} />
+            )}
           </button>
 
           {showVolumeSlider && (
             <div
               className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2.5 rounded-2xl border border-white/15 shadow-2xl flex items-center gap-2 z-30"
-              style={{ background: 'rgba(18, 20, 26, 0.98)', backdropFilter: 'blur(16px)' }}
+              style={{
+                background: "rgba(18, 20, 26, 0.98)",
+                backdropFilter: "blur(16px)",
+              }}
             >
               <input
                 type="range"
@@ -374,7 +422,9 @@ export default function PlayerBar({ collapsed = false }) {
                 onChange={(e) => setVolume(Number(e.target.value))}
                 className="w-20 h-1.5 cursor-pointer accent-white"
               />
-              <span className="text-[10px] font-mono text-white/80">{isMuted ? 0 : volume}%</span>
+              <span className="text-[10px] font-mono text-white/80">
+                {isMuted ? 0 : volume}%
+              </span>
             </div>
           )}
         </div>
