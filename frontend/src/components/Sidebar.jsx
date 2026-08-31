@@ -33,13 +33,13 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
     <>
       <aside
         className={`relative flex flex-col flex-1 min-h-0 shrink-0 rounded-3xl transition-all duration-300 bg-white/[0.03] backdrop-blur-2xl bg-gradient-to-br from-white/10 via-white/[0.04] to-transparent border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)] z-20 select-none`}
-        style={{ width: panelWidth }}
+        style={{ width: panelWidth, minWidth: panelWidth, maxWidth: panelWidth }}
       >
         {/* ── COLLAPSED DOCK VIEW (72px Icon Bar) ──────────────────────── */}
         {collapsed ? (
-          <div className="flex flex-col items-center h-full py-4 px-2.5 justify-between">
+          <div className="flex flex-col items-center h-full py-3 px-2 justify-between">
             {/* Top Section: Logo & Toggle */}
-            <div className="flex flex-col items-center gap-3 w-full">
+            <div className="flex flex-col items-center gap-2.5 w-full">
               {/* Expand / Collapse Button */}
               <button
                 onClick={onToggle}
@@ -48,7 +48,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
                 title="Expand Sidebar"
               >
                 <ChevronLeft size={16} className="rotate-180 transition-transform group-hover:scale-110" />
-                <span className="absolute left-full ml-3 px-2.5 py-1 rounded-xl bg-[#14161d]/95 backdrop-blur-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                <span
+                  className="absolute left-full ml-3 px-2.5 py-1 rounded-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[100]"
+                  style={{ backgroundColor: '#0d0f17' }}
+                >
                   Expand Sidebar
                 </span>
               </button>
@@ -60,7 +63,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
                 title="Tunely Home"
               >
                 <img src="/favicon.svg" alt="Tunely" className="w-full h-full object-contain" />
-                <span className="absolute left-full ml-3 px-2.5 py-1 rounded-xl bg-[#14161d]/95 backdrop-blur-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                <span
+                  className="absolute left-full ml-3 px-2.5 py-1 rounded-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[100]"
+                  style={{ backgroundColor: '#0d0f17' }}
+                >
                   Tunely Home
                 </span>
               </button>
@@ -82,7 +88,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
                   >
                     <Radio size={18} />
                   </button>
-                  <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-[#14161d]/95 backdrop-blur-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 flex items-center gap-1.5">
+                  <span
+                    className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-[100] flex items-center gap-1.5"
+                    style={{ backgroundColor: '#0d0f17' }}
+                  >
                     <Radio size={12} className="text-white/70" />
                     <span>Explore Music</span>
                   </span>
@@ -101,7 +110,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
                   >
                     <Search size={18} />
                   </button>
-                  <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-[#14161d]/95 backdrop-blur-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 flex items-center gap-1.5">
+                  <span
+                    className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-[100] flex items-center gap-1.5"
+                    style={{ backgroundColor: '#0d0f17' }}
+                  >
                     <Search size={12} className="text-white/70" />
                     <span>Search Tracks <span className="text-[9px] text-white/40 font-mono">⌘K</span></span>
                   </span>
@@ -120,7 +132,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
                   >
                     <Library size={18} />
                   </button>
-                  <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-[#14161d]/95 backdrop-blur-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 flex items-center gap-1.5">
+                  <span
+                    className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-[100] flex items-center gap-1.5"
+                    style={{ backgroundColor: '#0d0f17' }}
+                  >
                     <Library size={12} className="text-white/70" />
                     <span>Your Library</span>
                   </span>
@@ -147,7 +162,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
                       </span>
                     )}
                   </button>
-                  <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-[#14161d]/95 backdrop-blur-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 flex items-center gap-1.5">
+                  <span
+                    className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-[100] flex items-center gap-1.5"
+                    style={{ backgroundColor: '#0d0f17' }}
+                  >
                     <Heart size={12} className="text-white fill-white" />
                     <span>Liked Songs ({likedTracks.length})</span>
                   </span>
@@ -162,7 +180,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
                   >
                     <Users size={18} />
                   </button>
-                  <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-[#14161d]/95 backdrop-blur-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 flex items-center gap-1.5">
+                  <span
+                    className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-[100] flex items-center gap-1.5"
+                    style={{ backgroundColor: '#0d0f17' }}
+                  >
                     <Users size={12} className="text-emerald-400" />
                     <span>Listen Together <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /></span>
                   </span>
@@ -178,7 +199,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
                     <Trophy size={18} />
                     <Sparkles size={10} className="absolute top-1.5 right-1.5 text-amber-300 animate-pulse" />
                   </button>
-                  <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-[#14161d]/95 backdrop-blur-xl border border-amber-400/30 text-[11px] font-semibold text-amber-200 whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 flex items-center gap-1.5">
+                  <span
+                    className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl border border-amber-400/30 text-[11px] font-semibold text-amber-200 whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-[100] flex items-center gap-1.5"
+                    style={{ backgroundColor: '#0d0f17' }}
+                  >
                     <Trophy size={12} className="text-amber-300" />
                     <span>Tunely Wrapped 2026</span>
                   </span>
@@ -189,7 +213,7 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
 
               {/* Collapsed Mini Playlists List */}
               {playlists.length > 0 && (
-                <div className="flex flex-col items-center gap-1.5 w-full max-h-[140px] overflow-y-auto no-scrollbar py-0.5">
+                <div className="flex flex-col items-center gap-1.5 w-full max-h-[130px] overflow-y-auto no-scrollbar py-0.5">
                   {playlists.map((pl) => (
                     <div key={pl.id} className="relative group w-full flex justify-center">
                       <button
@@ -203,7 +227,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
                           <Music size={13} className="text-white/60 group-hover:text-white" />
                         )}
                       </button>
-                      <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-[#14161d]/95 backdrop-blur-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 flex items-center gap-1.5">
+                      <span
+                        className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-[100] flex items-center gap-1.5"
+                        style={{ backgroundColor: '#0d0f17' }}
+                      >
                         <Music size={12} className="text-white/60" />
                         <span className="max-w-[150px] truncate">{pl.title}</span>
                       </span>
@@ -213,8 +240,8 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
               )}
             </div>
 
-            {/* Bottom Section: Create Playlist Button */}
-            <div className="w-full pt-2 flex justify-center">
+            {/* Bottom Section: Create Playlist Button with comfortable margin */}
+            <div className="w-full pt-1 pb-0.5 flex justify-center shrink-0">
               <div className="relative group flex justify-center">
                 <button
                   onClick={() => setIsModalOpen(true)}
@@ -223,7 +250,10 @@ export default function Sidebar({ collapsed = false, onToggle = () => {} }) {
                 >
                   <Plus size={17} />
                 </button>
-                <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-[#14161d]/95 backdrop-blur-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 flex items-center gap-1.5">
+                <span
+                  className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl border border-white/20 text-[11px] font-semibold text-white whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-[100] flex items-center gap-1.5"
+                  style={{ backgroundColor: '#0d0f17' }}
+                >
                   <Plus size={12} className="text-white" />
                   <span>Create Playlist</span>
                 </span>

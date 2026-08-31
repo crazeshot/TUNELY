@@ -59,128 +59,139 @@ export default function PlayerBar({ collapsed = false }) {
   } = usePlayer();
 
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
 
   if (!currentTrack) return null;
 
   // ── 1. COMPACT DOCKED LUXURY MODE (When sidebar is closed) ─────────
   if (collapsed) {
+    const handleProgressClick = (e) => {
+      e.stopPropagation();
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const width = rect.width;
+      if (width > 0) {
+        const percent = Math.max(0, Math.min(100, (clickX / width) * 100));
+        seekTo(percent);
+      }
+    };
+
     return (
       <div
-        className="w-[72px] rounded-3xl p-2 flex flex-col items-center gap-2 transition-all duration-300 shadow-2xl relative group"
+        className="w-[72px] min-w-[72px] max-w-[72px] rounded-3xl p-2.5 flex flex-col items-center gap-2.5 transition-all duration-300 shadow-2xl relative select-none shrink-0 group z-30"
         style={{
-          background: "rgba(18, 20, 26, 0.96)",
-          border: "1px solid rgba(255, 255, 255, 0.15)",
-          backdropFilter: "blur(30px)",
-          boxShadow: `0 10px 30px ${themeColors.glow || "rgba(255, 255, 255, 0.15)"}`,
+          background: 'rgba(18, 20, 26, 0.96)',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          backdropFilter: 'blur(30px)',
+          boxShadow: `0 10px 30px ${themeColors.glow || 'rgba(255, 255, 255, 0.15)'}`,
         }}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
       >
-        {/* Floating Tooltip with full song info on hover */}
-        {showTooltip && (
-          <div
-            className="absolute left-full ml-3 top-1/2 -translate-y-1/2 p-3 rounded-2xl border border-white/20 shadow-2xl whitespace-nowrap z-50 animate-fade-in pointer-events-none"
-            style={{
-              background: "rgba(14, 16, 22, 0.98)",
-              backdropFilter: "blur(20px)",
-            }}
-          >
-            <p className="text-xs font-bold text-white max-w-[200px] truncate">
-              {currentTrack.title}
-            </p>
-            <p className="text-[11px] text-white/50 max-w-[200px] truncate mt-0.5">
-              {currentTrack.artist_name || currentTrack.artist}
-            </p>
-            <div className="flex items-center gap-2 text-[10px] font-mono text-white/40 mt-1">
-              <span>
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Larger 56px Cover Art with Visualizer trigger */}
+        {/* Floating Capsule Tooltip on Hover with 100% Solid Opaque Background */}
         <div
-          className={`relative group/cover cursor-pointer w-14 h-14 rounded-2xl overflow-hidden transition-all duration-300 shrink-0 ${
-            isPlaying
-              ? "ring-2 ring-white/60 shadow-[0_0_16px_rgba(255,255,255,0.35)]"
-              : ""
-          }`}
-          onClick={() => setIsVisualizerOpen(true)}
-          title={`${currentTrack.title} - ${currentTrack.artist_name || currentTrack.artist}`}
+          className="absolute left-full ml-3 top-1/2 -translate-y-1/2 p-3 rounded-2xl border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.98)] whitespace-nowrap z-[100] pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 text-white flex items-center gap-3 scale-95 group-hover:scale-100"
+          style={{ backgroundColor: '#0d0f17' }}
         >
           <img
             src={getCoverUrl(currentTrack)}
             alt={currentTrack.title}
             onError={(e) => handleCoverError(e, currentTrack)}
-            className="w-full h-full object-cover group-hover/cover:scale-105 transition-transform"
+            className="w-10 h-10 rounded-xl object-cover ring-1 ring-white/20 shadow-sm shrink-0"
+          />
+          <div className="text-left">
+            <p className="text-xs font-bold text-white max-w-[190px] truncate leading-snug">{currentTrack.title}</p>
+            <p className="text-[11px] text-neutral-300 max-w-[190px] truncate mt-0.5 font-medium leading-snug">{currentTrack.artist_name || currentTrack.artist}</p>
+            <div className="flex items-center gap-2 text-[10px] font-mono text-neutral-400 mt-1">
+              <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── 1. Clean Upright Album Cover Art with Visualizer Trigger ── */}
+        <div
+          className={`relative group/cover cursor-pointer w-13 h-13 rounded-2xl overflow-hidden transition-all duration-300 shrink-0 ${
+            isPlaying ? 'ring-2 ring-white/60 shadow-[0_0_18px_rgba(255,255,255,0.4)]' : 'ring-1 ring-white/20'
+          }`}
+          onClick={() => setIsVisualizerOpen(true)}
+          title={`${currentTrack.title} - Click to open visualizer`}
+        >
+          <img
+            src={getCoverUrl(currentTrack)}
+            alt={currentTrack.title}
+            onError={(e) => handleCoverError(e, currentTrack)}
+            className="w-full h-full object-cover group-hover/cover:scale-105 transition-transform duration-300"
           />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/cover:opacity-100 flex items-center justify-center transition-opacity">
-            <Maximize2 size={13} className="text-white" />
+            <Maximize2 size={14} className="text-white" />
           </div>
 
           {isPlaying && (
-            <div className="absolute bottom-1 right-1 w-2 h-2 rounded-full bg-white animate-ping" />
+            <span className="absolute bottom-1 right-1 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-black shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" />
           )}
         </div>
 
-        {/* Tactile Play/Pause Disc */}
+        {/* ── 2. Primary High-Contrast Tactile Play Button ── */}
         <button
           onClick={togglePlay}
-          className="w-11 h-11 rounded-full bg-white hover:bg-neutral-200 text-black flex items-center justify-center shadow-[0_0_18px_rgba(255,255,255,0.45)] hover:scale-105 active:scale-95 transition-all shrink-0"
-          title={isPlaying ? "Pause" : "Play"}
+          className="w-11 h-11 rounded-full bg-white hover:bg-neutral-100 text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.45)] hover:scale-108 active:scale-95 transition-all shrink-0 group/play"
+          title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
         >
           {isPlaying ? (
-            <Pause size={17} />
+            <Pause size={17} className="transition-transform group-hover/play:scale-110" />
           ) : (
-            <Play size={17} className="ml-0.5" />
+            <Play size={17} className="ml-0.5 transition-transform group-hover/play:scale-110" />
           )}
         </button>
 
-        {/* Micro Transport controls (Prev & Next) */}
-        <div className="flex items-center gap-1">
+        {/* ── 3. Prev & Next Transport Capsule ── */}
+        <div className="flex items-center gap-1 bg-white/5 p-0.5 rounded-2xl border border-white/10">
           <button
             onClick={prevTrack}
-            className="w-7 h-7 rounded-xl bg-white/5 hover:bg-white/15 text-white/60 hover:text-white flex items-center justify-center transition-colors"
+            className="w-7 h-7 rounded-xl hover:bg-white/15 text-white/60 hover:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95"
             title="Previous Track"
           >
             <SkipBack size={12} />
           </button>
           <button
             onClick={nextTrack}
-            className="w-7 h-7 rounded-xl bg-white/5 hover:bg-white/15 text-white/60 hover:text-white flex items-center justify-center transition-colors"
+            className="w-7 h-7 rounded-xl hover:bg-white/15 text-white/60 hover:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95"
             title="Next Track"
           >
             <SkipForward size={12} />
           </button>
         </div>
 
-        {/* Glowing Progress bar */}
-        <div className="w-full px-1">
-          <div className="w-full h-1 bg-white/15 rounded-full overflow-hidden">
+        {/* ── 4. Clickable / Scrubbable Micro Progress Bar ── */}
+        <div
+          onClick={handleProgressClick}
+          className="w-full px-1 py-1 cursor-pointer group/bar flex items-center"
+          title={`Seek (${formatTime(currentTime)} / ${formatTime(duration)})`}
+        >
+          <div className="w-full h-1.5 bg-white/15 group-hover/bar:h-2 group-hover/bar:bg-white/25 rounded-full overflow-hidden transition-all relative">
             <div
-              className="h-full bg-white transition-all duration-100 shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+              className="h-full bg-white transition-all duration-75 shadow-[0_0_8px_rgba(255,255,255,0.9)]"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
-        {/* Heart Like */}
-        <button
-          onClick={() => toggleLike(currentTrack)}
-          className={`w-7 h-7 rounded-xl bg-white/5 hover:bg-white/15 flex items-center justify-center transition-transform hover:scale-110 ${
-            isCurrentTrackLiked
-              ? "text-white"
-              : "text-white/40 hover:text-white"
-          }`}
-          title={isCurrentTrackLiked ? "Unlike" : "Like"}
-        >
-          <Heart
-            size={13}
-            className={isCurrentTrackLiked ? "fill-white" : ""}
-          />
-        </button>
+        {/* ── 5. Quick Utility Row: Heart Like + Studio EQ Toggle ── */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => toggleLike(currentTrack)}
+            className={`w-7 h-7 rounded-xl bg-white/5 hover:bg-white/15 flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${
+              isCurrentTrackLiked ? 'text-white' : 'text-white/40 hover:text-white'
+            }`}
+            title={isCurrentTrackLiked ? 'Unlike' : 'Like'}
+          >
+            <Heart size={13} className={isCurrentTrackLiked ? 'fill-white' : ''} />
+          </button>
+          <button
+            onClick={() => setIsEqualizerOpen(true)}
+            className="w-7 h-7 rounded-xl bg-white/5 hover:bg-white/15 text-white/40 hover:text-white flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+            title="Open Equalizer & Soundstage"
+          >
+            <Sliders size={12} />
+          </button>
+        </div>
       </div>
     );
   }
