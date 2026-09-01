@@ -501,11 +501,66 @@ export default function MainContent() {
           </div>
         )}
 
-        {/* ── TAB 3: LIBRARY ─────────────────────────────────────── */}
+        {/* ── TAB 3: LIKED SONGS ─────────────────────────────────── */}
+        {activeTab === 'liked' && (
+          <div className="space-y-6">
+            {/* Liked Songs Hero Banner */}
+            <div
+              className="rounded-3xl p-6 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-transparent border border-white/15 flex items-center justify-between shadow-2xl"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-white text-black flex items-center justify-center shadow-lg">
+                  <Heart size={28} className="fill-black" />
+                </div>
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: "'gg sans', sans-serif" }}>
+                    Liked Songs
+                  </h2>
+                  <p className="text-xs text-white/60">{likedTracks.length} favorite {likedTracks.length === 1 ? 'track' : 'tracks'}</p>
+                </div>
+              </div>
+              {likedTracks.length > 0 && (
+                <button
+                  onClick={() => {
+                    playTrack(likedTracks[0]);
+                  }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-neutral-200 text-black text-xs font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 transition-all"
+                >
+                  <Play size={16} className="fill-black" />
+                  <span>Play All</span>
+                </button>
+              )}
+            </div>
+
+            {/* Liked Tracks Grid */}
+            {likedTracks.length > 0 ? (
+              <section>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                  {likedTracks.map((t, i) => (
+                    <AlbumCard key={t.videoId || t.id || `liked-${i}`} track={t} delay={i * 30} />
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <div className="py-16 px-4 rounded-3xl bg-white/[0.02] border border-white/10 text-center max-w-md mx-auto">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4">
+                  <Heart size={28} className="text-white/40" />
+                </div>
+                <h3 className="text-base font-bold text-white mb-1">Songs you like will appear here</h3>
+                <p className="text-xs text-white/50 leading-relaxed">
+                  Click the heart icon on any track while searching or playing to add it to your Liked Songs.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB 4: LIBRARY ─────────────────────────────────────── */}
         {activeTab === 'library' && (
           <div className="space-y-6">
             {/* Liked Songs Hero Card */}
             <div
+              onClick={() => {}}
               className="rounded-3xl p-6 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-transparent border border-white/15 flex items-center justify-between shadow-2xl"
             >
               <div className="flex items-center gap-4">
@@ -516,7 +571,7 @@ export default function MainContent() {
                   <h2 className="text-xl font-bold text-white" style={{ fontFamily: "'gg sans', sans-serif" }}>
                     Liked Songs
                   </h2>
-                  <p className="text-xs text-white/60">{likedTracks.length} favorite tracks</p>
+                  <p className="text-xs text-white/60">{likedTracks.length} favorite {likedTracks.length === 1 ? 'track' : 'tracks'}</p>
                 </div>
               </div>
               {likedTracks.length > 0 && (
@@ -538,7 +593,7 @@ export default function MainContent() {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
                   {offlineTrackList.map((t, i) => (
-                    <AlbumCard key={`offline-${t.id}`} track={t} delay={i * 40} />
+                    <AlbumCard key={`offline-${t.videoId || t.id || i}`} track={t} delay={i * 40} />
                   ))}
                 </div>
               </section>
@@ -550,7 +605,7 @@ export default function MainContent() {
                 <SectionTitle>Your Favorites</SectionTitle>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 mt-3">
                   {likedTracks.map((t, i) => (
-                    <AlbumCard key={t.id} track={t} delay={i * 50} />
+                    <AlbumCard key={t.videoId || t.id || `fav-${i}`} track={t} delay={i * 50} />
                   ))}
                 </div>
               </section>
@@ -559,27 +614,31 @@ export default function MainContent() {
             {/* Custom Playlists */}
             <section>
               <SectionTitle>Your Playlists</SectionTitle>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 mt-3">
-                {playlists.map((pl) => (
-                  <div
-                    key={pl.id}
-                    className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer group"
-                    onClick={() => setActivePlaylistModal(pl)}
-                  >
-                    <img
-                      src={pl.cover_url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'}
-                      alt={pl.title}
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
-                      }}
-                      className="w-full aspect-video object-cover rounded-xl mb-3 group-hover:scale-102 transition-transform"
-                    />
-                    <h4 className="text-sm font-bold text-white truncate">{pl.title}</h4>
-                    <p className="text-xs text-white/50 truncate mt-0.5">{pl.description || `${(pl.tracks || []).length} songs`}</p>
-                  </div>
-                ))}
-              </div>
+              {playlists.length === 0 ? (
+                <p className="text-xs text-white/40 italic mt-2">No custom playlists created yet.</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 mt-3">
+                  {playlists.map((pl) => (
+                    <div
+                      key={pl.id}
+                      className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer group"
+                      onClick={() => setActivePlaylistModal(pl)}
+                    >
+                      <img
+                        src={pl.cover_url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'}
+                        alt={pl.title}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+                        }}
+                        className="w-full aspect-video object-cover rounded-xl mb-3 group-hover:scale-102 transition-transform"
+                      />
+                      <h4 className="text-sm font-bold text-white truncate">{pl.title}</h4>
+                      <p className="text-xs text-white/50 truncate mt-0.5">{pl.description || `${(pl.tracks || []).length} songs`}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* Listening History */}
@@ -590,8 +649,8 @@ export default function MainContent() {
                   <SectionTitle>Listening History</SectionTitle>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-                  {history.slice(0, 4).map((t, i) => (
-                    <AlbumCard key={`hist-${t.id}-${i}`} track={t} delay={i * 50} />
+                  {history.slice(0, 8).map((t, i) => (
+                    <AlbumCard key={`hist-${t.videoId || t.id || i}`} track={t} delay={i * 50} />
                   ))}
                 </div>
               </section>
@@ -599,7 +658,7 @@ export default function MainContent() {
           </div>
         )}
 
-        {/* ── TAB 4: SETTINGS ────────────────────────────────────── */}
+        {/* ── TAB 5: SETTINGS ────────────────────────────────────── */}
         {activeTab === 'settings' && (
           <SettingsPage />
         )}

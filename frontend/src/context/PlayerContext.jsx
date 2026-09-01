@@ -159,7 +159,7 @@ export function PlayerProvider({ children }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
-        const savedLikes = localStorage.getItem(`tunely_liked_tracks_v3_${userId}`);
+        const savedLikes = localStorage.getItem(`tunely_liked_tracks_v3_${userId}`) || localStorage.getItem('tunely_liked_tracks_v2');
         const parsedLikes = savedLikes ? JSON.parse(savedLikes) : [];
         setLikedTracks(parsedLikes);
         const nextIds = new Set();
@@ -169,10 +169,10 @@ export function PlayerProvider({ children }) {
         });
         setLikedTrackIds(nextIds);
 
-        const savedPls = localStorage.getItem(`tunely_playlists_v3_${userId}`);
+        const savedPls = localStorage.getItem(`tunely_playlists_v3_${userId}`) || localStorage.getItem('tunely_playlists_v2');
         setPlaylists(savedPls ? JSON.parse(savedPls) : []);
 
-        const savedHist = localStorage.getItem(`tunely_history_v3_${userId}`);
+        const savedHist = localStorage.getItem(`tunely_history_v3_${userId}`) || localStorage.getItem('tunely_history_v2');
         setHistory(savedHist ? JSON.parse(savedHist) : []);
 
         const savedCounts = localStorage.getItem(`tunely_play_counts_v3_${userId}`);
