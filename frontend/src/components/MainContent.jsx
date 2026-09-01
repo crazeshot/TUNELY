@@ -39,7 +39,7 @@ export default function MainContent() {
     setActivePlaylistModal,
   } = usePlayer();
 
-  const { user, setIsWrappedOpen } = useAuth();
+  const { user, isLoggedIn, setIsWrappedOpen } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchSource, setSearchSource] = useState('ytm'); // 'ytm' | 'all'
   const [dbTracks, setDbTracks] = useState([]);
@@ -159,7 +159,7 @@ export default function MainContent() {
   }, [ytmTrending, history]);
 
   return (
-    <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
+    <main className="flex-1 min-w-0 flex flex-col overflow-hidden relative z-10">
       {/* Scrollable Main View */}
       <div className="flex-1 overflow-y-auto px-3 pt-2 pb-4 space-y-6">
 
@@ -173,7 +173,7 @@ export default function MainContent() {
                   className="text-xl sm:text-2xl font-bold text-white tracking-tight"
                   style={{ fontFamily: "'gg sans', sans-serif" }}
                 >
-                  Welcome back, {user?.display_name || user?.username || 'Audiophile'}
+                  {isLoggedIn ? `Welcome back, ${user?.display_name || user?.username}` : 'Welcome to Tunely'}
                 </h1>
                 <p className="text-xs text-white/50 mt-0.5">
                   Listen to high-fidelity audio streams and trending songs

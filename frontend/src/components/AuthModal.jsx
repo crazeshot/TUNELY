@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, User, Lock, Mail, Sparkles, LogIn, UserPlus, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 
 export default function AuthModal() {
-  const { isAuthModalOpen, setIsAuthModalOpen, login, register, authError, setAuthError } = useAuth();
-  const [tab, setTab] = useState('login'); // 'login' | 'register'
+  const { isAuthModalOpen, setIsAuthModalOpen, login, register, authError, setAuthError, authTab } = useAuth();
+  const [tab, setTab] = useState(authTab || 'login');
+
+  useEffect(() => {
+    if (authTab) setTab(authTab);
+  }, [authTab, isAuthModalOpen]);
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');

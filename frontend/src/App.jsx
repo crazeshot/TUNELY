@@ -157,7 +157,7 @@ function AppLayout() {
       {/* Main 3-Column Glass Layout */}
       <div className="relative z-10 flex h-full gap-2.5 p-3">
         {/* Left Column: Collapsible Navigation + Independent Visible Player */}
-        <div className="flex flex-col gap-2.5 h-full shrink-0 min-h-0">
+        <div className="flex flex-col gap-2.5 h-full shrink-0 min-h-0 relative z-30">
           <Sidebar
             collapsed={leftCollapsed}
             onToggle={() => setLeftCollapsed((v) => !v)}
