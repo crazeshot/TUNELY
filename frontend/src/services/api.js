@@ -352,6 +352,34 @@ export const api = {
     }
   },
 
+  async getYTMSongsByGenreOrMood(genre, mood, limit = 24) {
+    const cleanGenre = (genre || '').trim();
+    const cleanMood = (mood || '').trim();
+    const cacheKey = `ytm_gm_${cleanGenre.toLowerCase()}_${cleanMood.toLowerCase()}_${limit}`;
+    if (clientSearchCache.has(cacheKey)) {
+      return clientSearchCache.get(cacheKey);
+    }
+    try {
+      const params = new URLSearchParams();
+      if (cleanGenre && cleanGenre !== 'All') params.append('genre', cleanGenre);
+      if (cleanMood && cleanMood !== 'All') params.append('mood', cleanMood);
+      params.append('limit', String(limit));
+
+      const res = await fetch(`${BASE_URL}/ytm/genre-mood/?${params.toString()}`);
+      if (!res.ok) throw new Error('YTM genre/mood fetch failed');
+      const data = await res.json();
+      const results = (data.tracks || []).map((t) => ({
+        ...t,
+        audio_url: `${BASE_URL}/ytm/stream/${t.videoId}/`,
+      }));
+      clientSearchCache.set(cacheKey, results);
+      return results;
+    } catch (err) {
+      console.warn('[API] YTM genre/mood note:', err.message);
+      return [];
+    }
+  },
+
   // Aliases for seamless casing compatibility
   searchYtm(query, limit) {
     return this.searchYTM(query, limit);
@@ -359,6 +387,14 @@ export const api = {
 
   getYtmTrending() {
     return this.getYTMTrending();
+  },
+
+  getYtmGenreMood(genre, mood, limit) {
+    return this.getYTMSongsByGenreOrMood(genre, mood, limit);
+  },
+
+  getYTMGenreMood(genre, mood, limit) {
+    return this.getYTMSongsByGenreOrMood(genre, mood, limit);
   },
 
   getYtmLyrics(videoId) {

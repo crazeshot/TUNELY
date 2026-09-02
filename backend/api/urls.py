@@ -18,6 +18,7 @@ from .views import (
     genres_view,
     ytm_search_view,
     ytm_trending_view,
+    ytm_genre_mood_view,
     ytm_stream_view,
     ytm_lyrics_view,
     ytm_related_view,
@@ -44,6 +45,7 @@ urlpatterns = [
     # YouTube Music Endpoints
     path('ytm/search/', ytm_search_view, name='ytm-search'),
     path('ytm/trending/', ytm_trending_view, name='ytm-trending'),
+    path('ytm/genre-mood/', ytm_genre_mood_view, name='ytm-genre-mood'),
     path('ytm/stream/<str:video_id>/', ytm_stream_view, name='ytm-stream'),
     path('ytm/lyrics/<str:video_id>/', ytm_lyrics_view, name='ytm-lyrics'),
     path('ytm/related/', ytm_related_view, name='ytm-related'),

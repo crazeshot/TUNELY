@@ -131,3 +131,10 @@ class TunelyEnterpriseAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data['tracks']), 1)
         self.assertEqual(res.data['tracks'][0]['title'], 'Midnight City')
+
+    def test_ytm_genre_mood_endpoint(self):
+        res = self.client.get('/api/ytm/genre-mood/?genre=Rock&limit=3')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('tracks', res.data)
+        self.assertEqual(res.data['genre'], 'Rock')
+        self.assertIn('count', res.data)

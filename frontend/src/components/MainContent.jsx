@@ -6,24 +6,16 @@ import BottomNav from './BottomNav';
 import AudioCanvasVisualizer from './AudioCanvasVisualizer';
 import SettingsPage from './SettingsPage';
 import ProfileDropdown from './ProfileDropdown';
-import { genresList } from '../data/musicData';
+import { genresList, moodsList } from '../data/musicData';
 import { usePlayer } from '../context/usePlayer';
 import { useAuth } from '../context/useAuth';
 import { api } from '../services/api';
 import { getAllOfflineTracks } from '../services/offlineStorage';
 
-const MOODS = [
-  { id: 'All', label: 'All Moods', emoji: '✨' },
-  { id: 'Chill', label: 'Late Night', emoji: '🌙' },
-  { id: 'Energy', label: 'High Energy', emoji: '⚡' },
-  { id: 'Focus', label: 'Deep Focus', emoji: '☕' },
-  { id: 'Melancholy', label: 'Melancholy', emoji: '💔' },
-  { id: 'Drive', label: 'Night Drive', emoji: '🚗' },
-];
-
 export default function MainContent() {
   const {
     activeTab,
+    setActiveTab,
     activeGenre,
     activeMood,
     setActiveGenre,
@@ -47,6 +39,44 @@ export default function MainContent() {
   const [ytmSearchResults, setYtmSearchResults] = useState([]);
   const [ytmTrending, setYtmTrending] = useState([]);
   const [isYtmLoading, setIsYtmLoading] = useState(false);
+
+  // Dynamic YouTube Music Genre and Mood Tracks
+  const [genreTracks, setGenreTracks] = useState([]);
+  const [isGenreLoading, setIsGenreLoading] = useState(false);
+
+  const isFiltered = (activeGenre && activeGenre !== 'All') || (activeMood && activeMood !== 'All');
+
+  // Fetch YouTube Music songs according to selected Genre and/or Mood
+  useEffect(() => {
+    let isMounted = true;
+    if (!isFiltered) {
+      setGenreTracks([]);
+      setIsGenreLoading(false);
+      return;
+    }
+
+    setIsGenreLoading(true);
+    const fetchGenreMood = api.getYTMSongsByGenreOrMood || api.getYtmGenreMood;
+    if (typeof fetchGenreMood === 'function') {
+      fetchGenreMood.call(api, activeGenre, activeMood, 28)
+        .then((tracks) => {
+          if (isMounted) {
+            setGenreTracks(tracks || []);
+            setIsGenreLoading(false);
+          }
+        })
+        .catch(() => {
+          if (isMounted) {
+            setGenreTracks([]);
+            setIsGenreLoading(false);
+          }
+        });
+    } else {
+      setIsGenreLoading(false);
+    }
+
+    return () => { isMounted = false; };
+  }, [activeGenre, activeMood, isFiltered]);
 
   // Fetch SQLite Tracks
   useEffect(() => {
@@ -260,15 +290,15 @@ export default function MainContent() {
 
             {/* Mood Selector Pills */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-              {MOODS.map((m) => (
+              {moodsList.map((m) => (
                 <button
                   key={m.id}
                   onClick={() => setActiveMood(m.id)}
                   className={`
-                    flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200
+                    flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 cursor-pointer
                     ${
                       activeMood === m.id
-                        ? 'bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.25)] scale-105'
+                        ? 'bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.3)] scale-105'
                         : 'bg-white/10 hover:bg-white/15 text-white/70 hover:text-white border border-white/10'
                     }
                   `}
@@ -286,111 +316,223 @@ export default function MainContent() {
                   key={g.name}
                   onClick={() => setActiveGenre(g.name)}
                   className={`
-                    px-3.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-all duration-200
+                    flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-all duration-200 cursor-pointer
                     ${
                       activeGenre === g.name
-                        ? 'bg-white text-black font-semibold shadow-sm'
+                        ? 'bg-white text-black font-semibold shadow-sm scale-105'
                         : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/5'
                     }
                   `}
                 >
-                  {g.name}
+                  <span>{g.icon}</span>
+                  <span>{g.name}</span>
                 </button>
               ))}
             </div>
 
-            {/* Curated Daily Mixes Section */}
-            {dailyMixes.length > 0 && (
-              <section>
-                <div className="flex items-center justify-between mb-3">
-                  <SectionTitle>Made For You: Daily Mixes</SectionTitle>
-                  <span className="text-xs text-white/40">{dailyMixes.length} stations</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {dailyMixes.map((mix) => (
-                    <div
-                      key={mix.id}
-                      onClick={() => {
-                        if (mix.tracks && mix.tracks.length > 0) playTrack(mix.tracks[0]);
-                      }}
-                      className="p-4 rounded-2xl bg-white/[0.04] hover:bg-white/10 border border-white/10 cursor-pointer transition-all hover:scale-102 group flex items-center gap-3.5"
-                    >
-                      <img
-                        src={mix.cover_url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'}
-                        alt={mix.title}
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
-                        }}
-                        className="w-14 h-14 rounded-xl object-cover shadow-md group-hover:ring-2 group-hover:ring-white/40"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-xs font-bold text-white truncate">{mix.title}</h4>
-                        <p className="text-[11px] text-white/50 line-clamp-2 mt-0.5">{mix.description}</p>
+            {/* ── CONDITIONAL CONTENT: GENRE/MOOD STATION OR DEFAULT DISCOVERY FEED ── */}
+            {isFiltered ? (
+              <div className="space-y-6 animate-fadeIn">
+                {/* Genre & Mood Station Hero Banner */}
+                <div
+                  className="relative rounded-3xl overflow-hidden p-6 sm:p-8 flex flex-col justify-between shadow-2xl border border-white/15 transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(35, 42, 58, 0.95) 0%, rgba(14, 17, 24, 0.98) 100%)',
+                  }}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white border border-white/20 flex items-center gap-1.5 shadow-sm">
+                          <Sparkles size={11} className="text-white" />
+                          For You
+                        </span>
+                        {activeGenre !== 'All' && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-white/90 border border-white/10">
+                            Genre: {activeGenre}
+                          </span>
+                        )}
+                        {activeMood !== 'All' && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-white/90 border border-white/10">
+                            Mood: {activeMood}
+                          </span>
+                        )}
                       </div>
+
+                      <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight" style={{ fontFamily: "'gg sans', sans-serif" }}>
+                        {activeGenre !== 'All' ? `${activeGenre} Station` : `${activeMood} Vibes`}
+                      </h2>
+                      <p className="text-xs text-white/60 mt-1 max-w-lg">
+                        Stream official songs curated and tailored for you.
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
 
-            {/* Recommended Section */}
-            {recList.length > 0 && (
-              <section>
-                <div className="flex items-center justify-between mb-3">
-                  <SectionTitle>Recommended For You</SectionTitle>
-                  <span className="text-xs text-white/40">{recList.length} tracks</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-                  {recList.map((t, i) => (
-                    <AlbumCard key={t.id} track={t} delay={i * 60} />
-                  ))}
-                </div>
-              </section>
-            )}
+                    <div className="flex items-center gap-3">
+                      {genreTracks.length > 0 && (
+                        <button
+                          onClick={() => {
+                            playTrack(genreTracks[0]);
+                            if (genreTracks.length > 1) {
+                              genreTracks.slice(1).forEach((t) => addToQueue(t));
+                            }
+                          }}
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-black font-bold text-xs shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                        >
+                          <Play size={15} className="fill-black" />
+                          <span>Play Station</span>
+                        </button>
+                      )}
 
-            {/* Popular Artists Carousel */}
-            {popularArtists.length > 0 && (
-              <section className="pt-2">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Users size={16} className="text-white/80" />
-                    <SectionTitle>Popular Artists</SectionTitle>
+                      <button
+                        onClick={() => {
+                          setActiveGenre('All');
+                          setActiveMood('All');
+                        }}
+                        className="px-4 py-2 rounded-full bg-white/5 hover:bg-white/15 text-white/70 hover:text-white border border-white/10 text-xs font-semibold transition-all cursor-pointer"
+                      >
+                        Reset Filters
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                  {popularArtists.map((artist) => (
-                    <div
-                      key={artist.name}
-                      onClick={() => setActiveArtistModal(artist)}
-                      className="flex flex-col items-center text-center p-3 rounded-2xl bg-white/[0.03] hover:bg-white/10 border border-white/5 cursor-pointer transition-all hover:scale-105 group"
-                    >
-                      <img
-                        src={artist.avatar}
-                        alt={artist.name}
-                        className="w-16 h-16 rounded-full object-cover shadow-lg mb-2 group-hover:ring-2 group-hover:ring-white/40 transition-all"
-                      />
-                      <p className="text-xs font-bold text-white truncate max-w-full">{artist.name}</p>
-                      <span className="text-[10px] text-white/40">{artist.genre}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
 
-            {/* Recently Played Section */}
-            {recentList.length > 0 && (
-              <section>
-                <div className="flex items-center justify-between mb-3">
-                  <SectionTitle>Recently Streamed</SectionTitle>
-                  <span className="text-xs text-white/40">{recentList.length} tracks</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-                  {recentList.map((t, i) => (
-                    <AlbumCard key={`rec-${t.id}`} track={t} delay={i * 40} />
-                  ))}
-                </div>
-              </section>
+                {/* Genre Tracks Grid or Loading Skeleton */}
+                {isGenreLoading ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse space-y-3">
+                        <div className="w-full aspect-square rounded-xl bg-white/10" />
+                        <div className="h-3.5 bg-white/10 rounded w-3/4" />
+                        <div className="h-2.5 bg-white/5 rounded w-1/2" />
+                      </div>
+                    ))}
+                  </div>
+                ) : genreTracks.length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <SectionTitle>
+                        {activeGenre !== 'All' ? activeGenre : ''} {activeMood !== 'All' ? activeMood : ''} Songs ({genreTracks.length})
+                      </SectionTitle>
+                      <span className="text-xs text-white/40">Powered by YouTube Music</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                      {genreTracks.map((t, i) => (
+                        <AlbumCard key={t.id || t.videoId || i} track={t} delay={i * 20} />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-16 text-white/40">
+                    <Disc size={36} className="mx-auto mb-2 opacity-50 animate-spin" />
+                    <p className="text-sm">No tracks found for this specific genre/mood selection.</p>
+                    <button
+                      onClick={() => {
+                        setActiveGenre('All');
+                        setActiveMood('All');
+                      }}
+                      className="mt-3 text-xs text-white underline underline-offset-4 hover:text-white cursor-pointer"
+                    >
+                      Return to All Songs
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Curated Daily Mixes Section */}
+                {dailyMixes.length > 0 && (
+                  <section>
+                    <div className="flex items-center justify-between mb-3">
+                      <SectionTitle>Made For You: Daily Mixes</SectionTitle>
+                      <span className="text-xs text-white/40">{dailyMixes.length} stations</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {dailyMixes.map((mix) => (
+                        <div
+                          key={mix.id}
+                          onClick={() => {
+                            if (mix.tracks && mix.tracks.length > 0) playTrack(mix.tracks[0]);
+                          }}
+                          className="p-4 rounded-2xl bg-white/[0.04] hover:bg-white/10 border border-white/10 cursor-pointer transition-all hover:scale-102 group flex items-center gap-3.5"
+                        >
+                          <img
+                            src={mix.cover_url || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'}
+                            alt={mix.title}
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+                            }}
+                            className="w-14 h-14 rounded-xl object-cover shadow-md group-hover:ring-2 group-hover:ring-white/40"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs font-bold text-white truncate">{mix.title}</h4>
+                            <p className="text-[11px] text-white/50 line-clamp-2 mt-0.5">{mix.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Recommended Section */}
+                {recList.length > 0 && (
+                  <section>
+                    <div className="flex items-center justify-between mb-3">
+                      <SectionTitle>Recommended For You</SectionTitle>
+                      <span className="text-xs text-white/40">{recList.length} tracks</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                      {recList.map((t, i) => (
+                        <AlbumCard key={t.id} track={t} delay={i * 60} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Popular Artists Carousel */}
+                {popularArtists.length > 0 && (
+                  <section className="pt-2">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Users size={16} className="text-white/80" />
+                        <SectionTitle>Popular Artists</SectionTitle>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                      {popularArtists.map((artist) => (
+                        <div
+                          key={artist.name}
+                          onClick={() => setActiveArtistModal(artist)}
+                          className="flex flex-col items-center text-center p-3 rounded-2xl bg-white/[0.03] hover:bg-white/10 border border-white/5 cursor-pointer transition-all hover:scale-105 group"
+                        >
+                          <img
+                            src={artist.avatar}
+                            alt={artist.name}
+                            className="w-16 h-16 rounded-full object-cover shadow-lg mb-2 group-hover:ring-2 group-hover:ring-white/40 transition-all"
+                          />
+                          <p className="text-xs font-bold text-white truncate max-w-full">{artist.name}</p>
+                          <span className="text-[10px] text-white/40">{artist.genre}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Recently Played Section */}
+                {recentList.length > 0 && (
+                  <section>
+                    <div className="flex items-center justify-between mb-3">
+                      <SectionTitle>Recently Streamed</SectionTitle>
+                      <span className="text-xs text-white/40">{recentList.length} tracks</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                      {recentList.map((t, i) => (
+                        <AlbumCard key={`rec-${t.id}`} track={t} delay={i * 40} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </>
             )}
           </div>
         )}
@@ -469,10 +611,41 @@ export default function MainContent() {
                     </div>
                   ) : null
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-                    {(ytmTrending.length > 0 ? ytmTrending : effectiveTracks).map((t, i) => (
-                      <AlbumCard key={t.id} track={t} delay={i * 30} />
-                    ))}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                      {(ytmTrending.length > 0 ? ytmTrending : effectiveTracks).map((t, i) => (
+                        <AlbumCard key={t.id} track={t} delay={i * 30} />
+                      ))}
+                    </div>
+
+                    {/* Browse Categories & Genres */}
+                    <div className="pt-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <SectionTitle>Browse by Genre & Mood</SectionTitle>
+                        <span className="text-xs text-white/40">Powered by YouTube Music</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 gap-3">
+                        {genresList.filter((g) => g.name !== 'All').map((g) => (
+                          <div
+                            key={g.name}
+                            onClick={() => {
+                              setActiveGenre(g.name);
+                              setActiveTab('home');
+                            }}
+                            className={`p-4 rounded-2xl bg-gradient-to-br ${g.gradient || 'from-white/10 to-transparent'} border border-white/10 hover:border-white/25 cursor-pointer transition-all hover:scale-102 group relative overflow-hidden flex items-center justify-between shadow-lg`}
+                          >
+                            <div>
+                              <span className="text-2xl mb-1 block group-hover:scale-110 transition-transform">{g.icon}</span>
+                              <h4 className="text-sm font-bold text-white tracking-tight">{g.name}</h4>
+                              <p className="text-[10px] text-white/50">YouTube Music Mix</p>
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Play size={14} className="fill-white text-white ml-0.5" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

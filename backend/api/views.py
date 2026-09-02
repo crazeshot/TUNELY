@@ -67,6 +67,7 @@ def api_root(request):
                 'playlists': '/api/playlists/',
                 'genres': '/api/genres/',
                 'search': '/api/search/?q={query}',
+                'ytm_genre_mood': '/api/ytm/genre-mood/?genre={genre}&mood={mood}',
                 'health': '/api/health/',
             },
         }
@@ -489,6 +490,24 @@ def ytm_search_view(request):
 def ytm_trending_view(request):
     tracks = ytmusic_service.get_trending_tracks()
     return Response({'tracks': tracks})
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def ytm_genre_mood_view(request):
+    """
+    Fetch songs categorized by Genre and/or Mood via YouTube Music's recommendation algorithm.
+    """
+    genre = request.query_params.get('genre', '').strip()
+    mood = request.query_params.get('mood', '').strip()
+    limit = int(request.query_params.get('limit', 24))
+    tracks = ytmusic_service.get_genre_or_mood_tracks(genre=genre, mood=mood, limit=limit)
+    return Response({
+        'genre': genre or 'All',
+        'mood': mood or 'All',
+        'count': len(tracks),
+        'tracks': tracks
+    })
 
 
 @api_view(['GET'])

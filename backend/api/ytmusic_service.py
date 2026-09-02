@@ -31,6 +31,7 @@ class YTMusicService:
         self._search_cache = {}    # { query: (timestamp, results) }
         self._stream_cache = {}    # { video_id: (timestamp, url) }
         self._trending_cache = None # (timestamp, results)
+        self._genre_mood_cache = {} # { cache_key: (timestamp, results) }
         self._init_client()
 
     def _init_client(self):
@@ -379,6 +380,64 @@ class YTMusicService:
         except Exception as e:
             print(f"[YTMusic] Lyrics error: {e}")
         return None
+
+    def get_genre_or_mood_tracks(self, genre=None, mood=None, limit=24):
+        """
+        Fetch top songs categorized according to Genre and/or Mood using YouTube Music's native ranking algorithm.
+        Pure songs only (filters shorts, podcasts, and clips).
+        """
+        clean_genre = (genre or '').strip()
+        clean_mood = (mood or '').strip()
+        if clean_genre.lower() in ('all', '', 'none'):
+            clean_genre = ''
+        if clean_mood.lower() in ('all', '', 'none'):
+            clean_mood = ''
+
+        if not clean_genre and not clean_mood:
+            return self.get_trending_tracks()
+
+        cache_key = f"gm_{clean_genre.lower()}_{clean_mood.lower()}_{limit}"
+        now = time.time()
+        if cache_key in self._genre_mood_cache:
+            cached_time, cached_tracks = self._genre_mood_cache[cache_key]
+            if now - cached_time < 7200:  # 2 hours cache
+                return cached_tracks
+
+        # Construct algorithmic search query tailored for YouTube Music song ranking
+        if clean_genre and clean_mood:
+            query = f"{clean_mood} {clean_genre} songs"
+        elif clean_genre:
+            query = f"{clean_genre} songs hits"
+        else:
+            query = f"{clean_mood} music songs vibes"
+
+        tracks = self.search_tracks(query, limit=limit)
+
+        # Fallback to general YouTube search if too few
+        if len(tracks) < 6:
+            fallback_query = f"{clean_genre} {clean_mood}".strip()
+            fallback_tracks = self.search_youtube_videos(fallback_query, limit=limit)
+            seen_ids = {t.get('videoId') for t in tracks}
+            for ft in fallback_tracks:
+                if ft.get('videoId') not in seen_ids:
+                    seen_ids.add(ft.get('videoId'))
+                    tracks.append(ft)
+                if len(tracks) >= limit:
+                    break
+
+        # Stamp the categorized genre and mood on each track object
+        for t in tracks:
+            if clean_genre:
+                t['genre'] = clean_genre
+            if clean_mood:
+                t['mood'] = clean_mood
+
+        self._genre_mood_cache[cache_key] = (now, tracks)
+        if len(self._genre_mood_cache) > 300:
+            oldest = min(self._genre_mood_cache.keys(), key=lambda k: self._genre_mood_cache[k][0])
+            del self._genre_mood_cache[oldest]
+
+        return tracks
 
     def _parse_duration(self, duration_str):
         try:
