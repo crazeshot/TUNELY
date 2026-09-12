@@ -18,6 +18,35 @@ import { extractColorsFromImage } from '../utils/colorExtractor';
 import { saveTrackForOffline, getAllOfflineTracks, deleteOfflineTrack } from '../services/offlineStorage';
 import { useAuth } from './useAuth';
 
+// Helper to extract known track duration in seconds
+export function parseTrackDuration(t) {
+  if (!t) return 0;
+  if (typeof t.duration_seconds === 'number' && t.duration_seconds > 0) {
+    return Math.floor(t.duration_seconds);
+  }
+  if (typeof t.durationSeconds === 'number' && t.durationSeconds > 0) {
+    return Math.floor(t.durationSeconds);
+  }
+  if (typeof t.duration === 'number' && t.duration > 0) {
+    return Math.floor(t.duration);
+  }
+  if (typeof t.duration === 'string') {
+    const s = t.duration.trim();
+    if (/^\d+$/.test(s)) {
+      const num = parseInt(s, 10);
+      if (num > 0) return num;
+    }
+    const parts = s.split(':').map(p => parseInt(p, 10));
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      return parts[0] * 60 + parts[1];
+    }
+    if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+  }
+  return 0;
+}
+
 export function PlayerProvider({ children }) {
   const { user, isLoggedIn, setIsAuthModalOpen } = useAuth();
   const userId = user?.id ? String(user.id) : (user?.username || 'guest');
@@ -38,7 +67,26 @@ export function PlayerProvider({ children }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(null);
-  const duration = audioDuration || currentTrack?.durationSeconds || 240;
+  const trackDuration = useMemo(() => parseTrackDuration(currentTrack), [currentTrack]);
+  const duration = useMemo(() => {
+    if (audioDuration && isFinite(audioDuration) && audioDuration > 0) {
+      if (trackDuration > 0) {
+        const ratio = audioDuration / trackDuration;
+        // If audioDuration is doubled (> 1.35x) or halved (< 0.65x) due to HE-AAC / SBR 22050Hz bugs,
+        // stick strictly to the authentic metadata duration.
+        if (ratio > 1.35 || ratio < 0.65) {
+          return trackDuration;
+        }
+      }
+      return audioDuration;
+    }
+    return trackDuration > 0 ? trackDuration : 240;
+  }, [audioDuration, trackDuration]);
+
+  const durationRef = useRef(duration);
+  useEffect(() => {
+    durationRef.current = duration;
+  }, [duration]);
   const [progress, setProgressState] = useState(0);
   const [volume, setVolumeState] = useState(75);
   const [isMuted, setIsMuted] = useState(false);
@@ -421,6 +469,7 @@ export function PlayerProvider({ children }) {
     }
     if (!track) return;
     setCurrentTrack(track);
+    setAudioDuration(null);
     setIsPlaying(true);
     setCurrentTime(0);
     setProgressState(0);
@@ -534,8 +583,9 @@ export function PlayerProvider({ children }) {
     const audio = audioRef.current;
     const clamped = Math.max(0, Math.min(100, percent));
     setProgressState(clamped);
-    if (audio && audio.duration && !isNaN(audio.duration)) {
-      audio.currentTime = (clamped / 100) * audio.duration;
+    const targetDuration = durationRef.current || (audio?.duration && isFinite(audio.duration) ? audio.duration : 0);
+    if (audio && targetDuration > 0) {
+      audio.currentTime = (clamped / 100) * targetDuration;
       setCurrentTime(audio.currentTime);
     }
     window.dispatchEvent(new CustomEvent('tunely-seek', { detail: { percent: clamped } }));
@@ -671,8 +721,10 @@ export function PlayerProvider({ children }) {
     let secAccumulator = 0;
 
     const handleTimeUpdate = () => {
-      if (!audio.duration || isNaN(audio.duration)) return;
       const curTime = audio.currentTime;
+      const targetDuration = durationRef.current || (audio.duration && isFinite(audio.duration) ? audio.duration : 0);
+      if (!targetDuration || isNaN(targetDuration) || targetDuration <= 0) return;
+
       const deltaSec = Math.max(0, curTime - prevAudioTime);
       prevAudioTime = curTime;
 
@@ -694,15 +746,30 @@ export function PlayerProvider({ children }) {
         }
       }
 
+      // Check if song has finished (reached or passed effective duration)
+      // Eliminates dead silence when audio stream has extra padding or mismatched duration
+      if (targetDuration > 0 && curTime >= targetDuration - 0.4) {
+        if (onEndedRef.current) {
+          onEndedRef.current();
+          return;
+        }
+      }
+
       const now = performance.now();
-      if (now - lastTimeUpdate < 150 && audio.currentTime < audio.duration) return;
+      if (now - lastTimeUpdate < 150 && curTime < targetDuration) return;
       lastTimeUpdate = now;
-      setCurrentTime(audio.currentTime);
-      setProgressState((audio.currentTime / audio.duration) * 100);
+      setCurrentTime(curTime);
+      setProgressState(Math.min(100, (curTime / targetDuration) * 100));
     };
 
     const handleLoadedMetadata = () => {
-      if (audio.duration && !isNaN(audio.duration)) {
+      if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+        setAudioDuration(Math.floor(audio.duration));
+      }
+    };
+
+    const handleDurationChange = () => {
+      if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
         setAudioDuration(Math.floor(audio.duration));
       }
     };
@@ -720,6 +787,7 @@ export function PlayerProvider({ children }) {
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('durationchange', handleDurationChange);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
@@ -730,8 +798,9 @@ export function PlayerProvider({ children }) {
       navigator.mediaSession.setActionHandler('previoustrack', () => handlePrevRef.current?.());
       navigator.mediaSession.setActionHandler('nexttrack', () => handleNextRef.current?.());
       navigator.mediaSession.setActionHandler('seekto', (details) => {
-        if (details.seekTime && audio.duration) {
-          seekToRef.current?.((details.seekTime / audio.duration) * 100);
+        const targetDuration = durationRef.current || audio.duration;
+        if (details.seekTime && targetDuration) {
+          seekToRef.current?.((details.seekTime / targetDuration) * 100);
         }
       });
     }
@@ -739,6 +808,7 @@ export function PlayerProvider({ children }) {
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('durationchange', handleDurationChange);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
       audio.pause();

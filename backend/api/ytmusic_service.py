@@ -317,7 +317,7 @@ class YTMusicService:
 
         video_url = f"https://www.youtube.com/watch?v={video_id}"
         ydl_opts = {
-            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'format': '140/bestaudio[ext=m4a][asr>=44100]/251/bestaudio[asr>=44100]/bestaudio/best',
             'quiet': True,
             'no_warnings': True,
             'skip_download': True,
