@@ -21,11 +21,11 @@ import { useAuth } from './useAuth';
 // Helper to extract known track duration in seconds
 export function parseTrackDuration(t) {
   if (!t) return 0;
-  if (typeof t.duration_seconds === 'number' && t.duration_seconds > 0) {
-    return Math.floor(t.duration_seconds);
-  }
-  if (typeof t.durationSeconds === 'number' && t.durationSeconds > 0) {
-    return Math.floor(t.durationSeconds);
+  const rawSec = t.duration_seconds ?? t.durationSeconds;
+  if (typeof rawSec === 'number' && rawSec > 0) return Math.floor(rawSec);
+  if (typeof rawSec === 'string' && /^\d+$/.test(rawSec.trim())) {
+    const n = parseInt(rawSec.trim(), 10);
+    if (n > 0) return n;
   }
   if (typeof t.duration === 'number' && t.duration > 0) {
     return Math.floor(t.duration);
