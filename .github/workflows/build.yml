@@ -107,9 +107,11 @@ jobs:
           pip install -r backend/requirements.txt pyinstaller
           cd backend
           pyinstaller --clean --noconfirm tunely_backend.spec
+          codesign --force --options runtime --entitlements ../frontend/src-tauri/Entitlements.plist --deep --sign - dist/tunely-backend
           mkdir -p ../frontend/src-tauri/binaries
           cp dist/tunely-backend ../frontend/src-tauri/binaries/tunely-backend-aarch64-apple-darwin
           chmod +x ../frontend/src-tauri/binaries/tunely-backend-aarch64-apple-darwin
+          codesign --force --options runtime --entitlements ../frontend/src-tauri/Entitlements.plist --deep --sign - ../frontend/src-tauri/binaries/tunely-backend-aarch64-apple-darwin
 
       - name: Install Frontend Dependencies
         run: |
@@ -120,6 +122,10 @@ jobs:
         run: |
           cd frontend
           npm run tauri build
+          if [ -d "src-tauri/target/release/bundle/macos/Tunely.app" ]; then
+            codesign --force --options runtime --entitlements src-tauri/Entitlements.plist --deep --sign - "src-tauri/target/release/bundle/macos/Tunely.app"
+            codesign --verify --deep --strict --verbose=2 "src-tauri/target/release/bundle/macos/Tunely.app"
+          fi
 
       - name: Upload macOS App (.dmg) & Bundle
         uses: actions/upload-artifact@v4

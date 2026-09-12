@@ -11,40 +11,60 @@ fn is_port_in_use(port: u16) -> bool {
 }
 
 fn find_backend_executable(app: &tauri::AppHandle) -> Option<PathBuf> {
-    // 1. Next to the main executable (production installed app)
+    let bin_name = if cfg!(windows) { "tunely-backend.exe" } else { "tunely-backend" };
+    let arch_bin_name = if cfg!(windows) {
+        "tunely-backend-x86_64-pc-windows-msvc.exe"
+    } else if cfg!(target_arch = "aarch64") {
+        "tunely-backend-aarch64-apple-darwin"
+    } else {
+        "tunely-backend-x86_64-apple-darwin"
+    };
+
+    // 1. Next to the main executable (in MacOS folder of .app on mac, or release folder on windows)
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(dir) = exe_path.parent() {
-            let p1 = dir.join("tunely-backend.exe");
+            let p1 = dir.join(bin_name);
             if p1.exists() {
                 return Some(p1);
             }
-            let p2 = dir.join("tunely-backend-x86_64-pc-windows-msvc.exe");
+            let p2 = dir.join(arch_bin_name);
             if p2.exists() {
                 return Some(p2);
+            }
+            // On macOS, check inside Contents/MacOS from Resources
+            let p_macos = dir.join("../MacOS").join(bin_name);
+            if p_macos.exists() {
+                return Some(p_macos);
             }
         }
     }
 
     // 2. In resource directory
     if let Ok(res_dir) = app.path().resource_dir() {
-        let p = res_dir.join("tunely-backend.exe");
+        let p = res_dir.join(bin_name);
         if p.exists() {
             return Some(p);
         }
-        let p_bin = res_dir.join("binaries").join("tunely-backend-x86_64-pc-windows-msvc.exe");
+        let p_bin = res_dir.join("binaries").join(arch_bin_name);
         if p_bin.exists() {
             return Some(p_bin);
+        }
+        let p_macos = res_dir.join("../MacOS").join(bin_name);
+        if p_macos.exists() {
+            return Some(p_macos);
         }
     }
 
     // 3. In relative paths for development
     let dev_paths = [
-        "binaries/tunely-backend-x86_64-pc-windows-msvc.exe",
-        "src-tauri/binaries/tunely-backend-x86_64-pc-windows-msvc.exe",
-        "../src-tauri/binaries/tunely-backend-x86_64-pc-windows-msvc.exe",
-        "../../backend/dist/tunely-backend.exe",
-        "backend/dist/tunely-backend.exe",
-        "../backend/dist/tunely-backend.exe",
+        format!("binaries/{}", arch_bin_name),
+        format!("src-tauri/binaries/{}", arch_bin_name),
+        format!("../src-tauri/binaries/{}", arch_bin_name),
+        "../../backend/dist/tunely-backend".to_string(),
+        "backend/dist/tunely-backend".to_string(),
+        "../backend/dist/tunely-backend".to_string(),
+        "../../backend/dist/tunely-backend.exe".to_string(),
+        "backend/dist/tunely-backend.exe".to_string(),
     ];
 
     for rel in &dev_paths {
