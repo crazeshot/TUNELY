@@ -276,7 +276,7 @@ export default function VisualizerModal() {
 
                 <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-white/40">
                   <span>{currentTrack.album_title || 'Single'}</span>
-                  <span>{currentTrack.bpm ? `${currentTrack.bpm} BPM` : currentTrack.genre}</span>
+                  <span>{currentTrack.bpm ? `${currentTrack.bpm} BPM` : (currentTrack.genre || 'Tunely').replace(/youtube\s*music/gi, 'Tunely')}</span>
                 </div>
               </div>
             </div>

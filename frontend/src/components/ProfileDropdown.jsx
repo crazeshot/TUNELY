@@ -33,6 +33,11 @@ export default function ProfileDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleOpenProfile = () => {
+    setActiveTab('profile');
+    setIsOpen(false);
+  };
+
   const handleOpenSettings = () => {
     setActiveTab('settings');
     setIsOpen(false);
@@ -116,16 +121,20 @@ export default function ProfileDropdown() {
           {isLoggedIn ? (
             <>
               {/* Top User Info Header */}
-              <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 mb-1">
+              <div
+                onClick={handleOpenProfile}
+                className="p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 mb-1 cursor-pointer transition-colors group"
+                title="View Profile & Account"
+              >
                 <div className="flex items-center gap-3">
                   <img
                     src={user?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
                     alt={user?.display_name || user?.username}
-                    className="w-11 h-11 rounded-full object-cover ring-1 ring-white/40 shadow-md"
+                    className="w-11 h-11 rounded-full object-cover ring-1 ring-white/40 group-hover:ring-white shadow-md transition-all"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <p className="text-xs font-bold text-white truncate" style={{ fontFamily: "'gg sans', sans-serif" }}>
+                      <p className="text-xs font-bold text-white truncate group-hover:text-purple-200 transition-colors" style={{ fontFamily: "'gg sans', sans-serif" }}>
                         {user?.display_name || user?.username}
                       </p>
                       <Sparkles size={11} className="text-white shrink-0" />
@@ -143,8 +152,8 @@ export default function ProfileDropdown() {
               <div className="space-y-0.5 px-1 py-1">
                 {/* Profile & Account */}
                 <button
-                  onClick={handleOpenSettings}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors group"
+                  onClick={handleOpenProfile}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors group cursor-pointer"
                 >
                   <User size={15} className="text-white/50 group-hover:text-white" />
                   <span>Profile & Account</span>
@@ -266,7 +275,7 @@ export default function ProfileDropdown() {
             </div>
 
             <p className="text-xs text-white/70 leading-relaxed font-light">
-              Tunely is an ultra high-fidelity music streaming and audiophile audio synthesis workstation powered by YouTube Music, Web Audio DSP, and real-time fluid simulation shaders.
+              Tunely is an ultra high-fidelity music streaming and audiophile audio synthesis workstation powered by Tunely, Web Audio DSP, and real-time fluid simulation shaders.
             </p>
 
             <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 text-[11px] text-white/60 text-left space-y-1 font-mono">

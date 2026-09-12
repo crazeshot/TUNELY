@@ -156,7 +156,7 @@ class YTMusicService:
                         'cover': cover_url,
                         'duration': duration_str,
                         'duration_seconds': duration_seconds,
-                        'genre': 'YouTube Music',
+                        'genre': 'Tunely',
                         'audio_url': f"/api/ytm/stream/{video_id}/",
                         'youtube_url': f"https://www.youtube.com/watch?v={video_id}",
                         'is_ytm': True,
@@ -220,7 +220,7 @@ class YTMusicService:
                     'cover': cover_url,
                     'duration': duration_str,
                     'duration_seconds': duration_seconds,
-                    'genre': 'YouTube Music',
+                    'genre': 'Tunely',
                     'audio_url': f"/api/ytm/stream/{video_id}/",
                     'youtube_url': f"https://www.youtube.com/watch?v={video_id}",
                     'is_ytm': True,
@@ -235,17 +235,34 @@ class YTMusicService:
             return []
 
     def get_trending_tracks(self):
+        return self.get_trending_songs()
+
+    def get_trending_songs(self):
+        """
+        Fetch top trending songs from YouTube Music charts with reliable fallback.
+        """
         now = time.time()
         if self._trending_cache:
             cached_time, cached_tracks = self._trending_cache
-            if now - cached_time < 7200:  # 2 hours
+            if now - cached_time < 7200 and cached_tracks:  # 2 hours and non-empty
                 return cached_tracks
 
         try:
             charts = self.ytm.get_charts(country='US')
-            songs = charts.get('songs', {}).get('items', [])
+            songs_data = charts.get('songs')
+            items = []
+            if isinstance(songs_data, dict):
+                items = songs_data.get('items', [])
+            elif isinstance(songs_data, list):
+                items = songs_data
+
+            if not items and 'videos' in charts:
+                videos_data = charts.get('videos')
+                if isinstance(videos_data, dict):
+                    items = videos_data.get('items', [])
+
             tracks = []
-            for item in songs[:16]:
+            for item in items[:24]:
                 video_id = item.get('videoId')
                 if not video_id:
                     continue
@@ -271,11 +288,22 @@ class YTMusicService:
                     'youtube_url': f"https://www.youtube.com/watch?v={video_id}",
                     'is_ytm': True,
                 })
-            self._trending_cache = (now, tracks)
-            return tracks
+            if tracks:
+                self._trending_cache = (now, tracks)
+                return tracks
         except Exception as e:
             print(f"[YTMusic] Charts error: {e}")
-            return []
+
+        # Fallback to searching top global trending songs
+        try:
+            tracks = self.search_tracks("top global trending songs hits", limit=24)
+            if tracks:
+                self._trending_cache = (now, tracks)
+                return tracks
+        except Exception as e:
+            print(f"[YTMusic] Trending fallback error: {e}")
+
+        return []
 
     def get_stream_url(self, video_id):
         """
@@ -347,7 +375,7 @@ class YTMusicService:
                         'cover': cover_url,
                         'duration': duration_str,
                         'duration_seconds': duration_sec,
-                        'genre': 'YouTube Music Radio',
+                        'genre': 'Tunely Radio',
                         'audio_url': f"/api/ytm/stream/{vid}/",
                         'youtube_url': f"https://www.youtube.com/watch?v={vid}",
                         'is_ytm': True,
@@ -403,24 +431,54 @@ class YTMusicService:
             if now - cached_time < 7200:  # 2 hours cache
                 return cached_tracks
 
-        # Construct algorithmic search query tailored for YouTube Music song ranking
+        # Construct algorithmic search queries tailored for YouTube Music song ranking
+        queries = []
         if clean_genre and clean_mood:
-            query = f"{clean_mood} {clean_genre} songs"
+            queries = [
+                f"{clean_mood} {clean_genre} songs",
+                f"best {clean_genre} {clean_mood} music hits",
+                f"{clean_genre} {clean_mood} playlist top",
+                f"{clean_mood} {clean_genre} popular tracks",
+            ]
         elif clean_genre:
-            query = f"{clean_genre} songs hits"
+            queries = [
+                f"{clean_genre} songs hits",
+                f"best of {clean_genre} music",
+                f"top {clean_genre} tracks",
+                f"popular {clean_genre} playlist",
+            ]
         else:
-            query = f"{clean_mood} music songs vibes"
+            queries = [
+                f"{clean_mood} music songs vibes",
+                f"chill {clean_mood} playlist songs",
+                f"best {clean_mood} tracks",
+                f"popular {clean_mood} songs",
+            ]
 
-        tracks = self.search_tracks(query, limit=limit)
+        tracks = []
+        seen_ids = set()
+
+        for q in queries:
+            sub_limit = limit - len(tracks)
+            if sub_limit <= 0:
+                break
+            batch = self.search_tracks(q, limit=sub_limit)
+            for t in batch:
+                vid = t.get('videoId')
+                if vid and vid not in seen_ids:
+                    seen_ids.add(vid)
+                    tracks.append(t)
+            if len(tracks) >= limit:
+                break
 
         # Fallback to general YouTube search if too few
-        if len(tracks) < 6:
-            fallback_query = f"{clean_genre} {clean_mood}".strip()
-            fallback_tracks = self.search_youtube_videos(fallback_query, limit=limit)
-            seen_ids = {t.get('videoId') for t in tracks}
+        if len(tracks) < min(12, limit):
+            fallback_query = f"{clean_genre} {clean_mood} music".strip()
+            fallback_tracks = self.search_youtube_videos(fallback_query, limit=limit - len(tracks))
             for ft in fallback_tracks:
-                if ft.get('videoId') not in seen_ids:
-                    seen_ids.add(ft.get('videoId'))
+                vid = ft.get('videoId')
+                if vid and vid not in seen_ids:
+                    seen_ids.add(vid)
                     tracks.append(ft)
                 if len(tracks) >= limit:
                     break

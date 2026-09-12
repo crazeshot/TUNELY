@@ -20,6 +20,19 @@ function getAuthHeaders() {
   return headers;
 }
 
+// Helper to normalize and sanitize track fields
+function sanitizeTrack(t) {
+  if (!t) return t;
+  const rawGenre = t.genre || 'Tunely';
+  const cleanGenre = rawGenre.replace(/youtube\s*music\s*(radio)?/gi, 'Tunely').trim() || 'Tunely';
+  return {
+    ...t,
+    genre: cleanGenre,
+    album_title: (t.album_title || '').replace(/youtube\s*music/gi, 'Tunely'),
+    audio_url: `${BASE_URL}/ytm/stream/${t.videoId}/`,
+  };
+}
+
 export const api = {
   // ── AUTHENTICATION ───────────────────────────────────────────────
   async register({ username, email, password, display_name }) {
@@ -282,10 +295,7 @@ export const api = {
       const res = await fetch(`${BASE_URL}/ytm/search/?q=${encodeURIComponent(query)}&limit=${limit}`);
       if (!res.ok) throw new Error('YTM search failed');
       const data = await res.json();
-      const results = (data.tracks || []).map((t) => ({
-        ...t,
-        audio_url: `${BASE_URL}/ytm/stream/${t.videoId}/`,
-      }));
+      const results = (data.tracks || []).map(sanitizeTrack);
       clientSearchCache.set(cacheKey, results);
       if (clientSearchCache.size > 200) {
         const firstKey = clientSearchCache.keys().next().value;
@@ -307,10 +317,7 @@ export const api = {
       const res = await fetch(`${BASE_URL}/ytm/trending/`);
       if (!res.ok) throw new Error('YTM trending failed');
       const data = await res.json();
-      const results = (data.tracks || []).map((t) => ({
-        ...t,
-        audio_url: `${BASE_URL}/ytm/stream/${t.videoId}/`,
-      }));
+      const results = (data.tracks || []).map(sanitizeTrack);
       trendingCache = results;
       trendingCacheTime = now;
       return results;
@@ -342,10 +349,7 @@ export const api = {
       const res = await fetch(`${BASE_URL}/ytm/related/?${params.toString()}`);
       if (!res.ok) throw new Error('YTM related fetch failed');
       const data = await res.json();
-      return (data.tracks || []).map((t) => ({
-        ...t,
-        audio_url: `${BASE_URL}/ytm/stream/${t.videoId}/`,
-      }));
+      return (data.tracks || []).map(sanitizeTrack);
     } catch (err) {
       console.warn('[API] YTM related note:', err.message);
       return [];
@@ -368,10 +372,7 @@ export const api = {
       const res = await fetch(`${BASE_URL}/ytm/genre-mood/?${params.toString()}`);
       if (!res.ok) throw new Error('YTM genre/mood fetch failed');
       const data = await res.json();
-      const results = (data.tracks || []).map((t) => ({
-        ...t,
-        audio_url: `${BASE_URL}/ytm/stream/${t.videoId}/`,
-      }));
+      const results = (data.tracks || []).map(sanitizeTrack);
       clientSearchCache.set(cacheKey, results);
       return results;
     } catch (err) {

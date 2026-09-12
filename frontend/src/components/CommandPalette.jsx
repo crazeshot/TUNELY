@@ -11,6 +11,7 @@ import {
   Home,
   LayoutGrid,
   Settings,
+  User,
   Radio,
   ExternalLink,
 } from 'lucide-react';
@@ -86,7 +87,7 @@ export default function CommandPalette() {
   const actions = useMemo(() => [
     {
       id: 'act-search-page',
-      title: query ? `Search for "${query}" on YouTube Music page` : 'Open Search Page',
+      title: query ? `Search for "${query}" on Tunely` : 'Open Search Page',
       category: 'Search',
       icon: Search,
       run: () => setActiveTab('search'),
@@ -148,6 +149,13 @@ export default function CommandPalette() {
       run: () => setActiveTab('settings'),
     },
     {
+      id: 'act-profile',
+      title: 'Open Profile & Account',
+      category: 'Navigation',
+      icon: User,
+      run: () => setActiveTab('profile'),
+    },
+    {
       id: 'act-clear-q',
       title: 'Clear Current Next Queue',
       category: 'Queue Management',
@@ -193,7 +201,7 @@ export default function CommandPalette() {
       id: `ytm-${t.id || t.videoId}`,
       title: t.title,
       subtitle: `${t.artist_name || t.artist} • ${t.duration || 'Song'}`,
-      category: 'YouTube Music',
+      category: 'Tunely',
       icon: Radio,
       cover: t.cover_url || t.cover,
       track: t,
@@ -256,7 +264,7 @@ export default function CommandPalette() {
               setSelectedIndex(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Search YouTube Music, songs, artists, or audio effects..."
+            placeholder="Search Tunely, songs, artists, or audio effects..."
             className="w-full bg-transparent text-sm text-white placeholder-white/40 outline-none"
           />
           {isYtmLoading && (

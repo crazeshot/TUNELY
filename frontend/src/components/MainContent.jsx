@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Play, Sparkles, Heart, Clock, Disc, Users, Trophy, Download, Radio, Search, Command } from 'lucide-react';
+import { Play, Sparkles, Heart, Clock, Disc, Users, Trophy, Download, Radio, Search, Command, ChevronDown, Loader2 } from 'lucide-react';
 import SearchBar from './SearchBar';
 import AlbumCard from './AlbumCard';
 import BottomNav from './BottomNav';
 import AudioCanvasVisualizer from './AudioCanvasVisualizer';
 import SettingsPage from './SettingsPage';
+import ProfilePage from './ProfilePage';
 import ProfileDropdown from './ProfileDropdown';
 import { genresList, moodsList } from '../data/musicData';
 import { usePlayer } from '../context/usePlayer';
@@ -43,6 +44,9 @@ export default function MainContent() {
   // Dynamic YouTube Music Genre and Mood Tracks
   const [genreTracks, setGenreTracks] = useState([]);
   const [isGenreLoading, setIsGenreLoading] = useState(false);
+  const [genreLimit, setGenreLimit] = useState(24);
+  const [isLoadingMoreGenre, setIsLoadingMoreGenre] = useState(false);
+  const [hasMoreGenre, setHasMoreGenre] = useState(true);
 
   const isFiltered = (activeGenre && activeGenre !== 'All') || (activeMood && activeMood !== 'All');
 
@@ -52,17 +56,24 @@ export default function MainContent() {
     if (!isFiltered) {
       setGenreTracks([]);
       setIsGenreLoading(false);
+      setGenreLimit(24);
+      setHasMoreGenre(true);
       return;
     }
 
+    setGenreLimit(24);
+    setHasMoreGenre(true);
     setIsGenreLoading(true);
     const fetchGenreMood = api.getYTMSongsByGenreOrMood || api.getYtmGenreMood;
     if (typeof fetchGenreMood === 'function') {
-      fetchGenreMood.call(api, activeGenre, activeMood, 28)
+      fetchGenreMood.call(api, activeGenre, activeMood, 24)
         .then((tracks) => {
           if (isMounted) {
             setGenreTracks(tracks || []);
             setIsGenreLoading(false);
+            if (!tracks || tracks.length < 24) {
+              setHasMoreGenre(false);
+            }
           }
         })
         .catch(() => {
@@ -77,6 +88,31 @@ export default function MainContent() {
 
     return () => { isMounted = false; };
   }, [activeGenre, activeMood, isFiltered]);
+
+  const handleLoadMoreGenre = useCallback(async () => {
+    if (isLoadingMoreGenre || !hasMoreGenre) return;
+    setIsLoadingMoreGenre(true);
+    try {
+      const nextLimit = genreLimit + 24;
+      const fetchGenreMood = api.getYTMSongsByGenreOrMood || api.getYtmGenreMood;
+      if (typeof fetchGenreMood === 'function') {
+        const newTracks = await fetchGenreMood.call(api, activeGenre, activeMood, nextLimit);
+        if (newTracks && newTracks.length > genreTracks.length) {
+          setGenreTracks(newTracks);
+          setGenreLimit(nextLimit);
+          if (newTracks.length < nextLimit) {
+            setHasMoreGenre(false);
+          }
+        } else {
+          setHasMoreGenre(false);
+        }
+      }
+    } catch (err) {
+      console.warn('[LoadMoreGenre] Note:', err);
+    } finally {
+      setIsLoadingMoreGenre(false);
+    }
+  }, [isLoadingMoreGenre, hasMoreGenre, genreLimit, activeGenre, activeMood, genreTracks.length]);
 
   // Fetch SQLite Tracks
   useEffect(() => {
@@ -103,7 +139,7 @@ export default function MainContent() {
     if (typeof fetchTrending === 'function') {
       fetchTrending.call(api).then((tracks) => {
         if (isMounted && tracks && tracks.length > 0) setYtmTrending(tracks);
-      }).catch(() => {});
+      }).catch(() => { });
     }
     return () => { isMounted = false; };
   }, []);
@@ -180,7 +216,7 @@ export default function MainContent() {
         map.set(name, {
           name,
           avatar: t.cover_url || t.cover,
-          genre: t.genre || 'Trending',
+          genre: (t.genre || 'Trending').replace(/youtube\s*music/gi, 'Tunely'),
           monthly_listeners: 'Live',
         });
       }
@@ -246,7 +282,7 @@ export default function MainContent() {
                   className="text-white/80 text-xs sm:text-sm hover:underline cursor-pointer inline-block"
                   onClick={() => setActiveArtistModal(featuredTrack)}
                 >
-                  {featuredTrack?.artist_name || featuredTrack?.artist} • {featuredTrack?.genre || 'Dream Pop'}
+                  {featuredTrack?.artist_name || featuredTrack?.artist} • {(featuredTrack?.genre || 'Tunely').replace(/youtube\s*music/gi, 'Tunely')}
                 </p>
 
                 <div className="flex items-center gap-3 pt-2">
@@ -296,10 +332,9 @@ export default function MainContent() {
                   onClick={() => setActiveMood(m.id)}
                   className={`
                     flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 cursor-pointer
-                    ${
-                      activeMood === m.id
-                        ? 'bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.3)] scale-105'
-                        : 'bg-white/10 hover:bg-white/15 text-white/70 hover:text-white border border-white/10'
+                    ${activeMood === m.id
+                      ? 'bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.3)] scale-105'
+                      : 'bg-white/10 hover:bg-white/15 text-white/70 hover:text-white border border-white/10'
                     }
                   `}
                 >
@@ -317,10 +352,9 @@ export default function MainContent() {
                   onClick={() => setActiveGenre(g.name)}
                   className={`
                     flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-all duration-200 cursor-pointer
-                    ${
-                      activeGenre === g.name
-                        ? 'bg-white text-black font-semibold shadow-sm scale-105'
-                        : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/5'
+                    ${activeGenre === g.name
+                      ? 'bg-white text-black font-semibold shadow-sm scale-105'
+                      : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/5'
                     }
                   `}
                 >
@@ -398,27 +432,55 @@ export default function MainContent() {
 
                 {/* Genre Tracks Grid or Loading Skeleton */}
                 {isGenreLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-                    {[...Array(8)].map((_, i) => (
-                      <div key={i} className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse space-y-3">
-                        <div className="w-full aspect-square rounded-xl bg-white/10" />
-                        <div className="h-3.5 bg-white/10 rounded w-3/4" />
-                        <div className="h-2.5 bg-white/5 rounded w-1/2" />
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                    {[...Array(12)].map((_, i) => (
+                      <div key={i} className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse space-y-2.5">
+                        <div className="w-full aspect-[4/5] rounded-xl bg-white/10" />
+                        <div className="h-3 bg-white/10 rounded w-3/4" />
+                        <div className="h-2 bg-white/5 rounded w-1/2" />
                       </div>
                     ))}
                   </div>
                 ) : genreTracks.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <SectionTitle>
                         {activeGenre !== 'All' ? activeGenre : ''} {activeMood !== 'All' ? activeMood : ''} Songs ({genreTracks.length})
                       </SectionTitle>
-                      <span className="text-xs text-white/40">Powered by YouTube Music</span>
+                      <span className="text-xs text-white/40">Powered by Tunely</span>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                       {genreTracks.map((t, i) => (
                         <AlbumCard key={t.id || t.videoId || i} track={t} delay={i * 20} />
                       ))}
+                    </div>
+
+                    {/* Load More Button Section */}
+                    <div className="flex flex-col items-center justify-center pt-5 pb-2">
+                      {hasMoreGenre ? (
+                        <button
+                          onClick={handleLoadMoreGenre}
+                          disabled={isLoadingMoreGenre}
+                          className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white border border-white/15 text-xs font-semibold shadow-lg hover:shadow-xl transition-all cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isLoadingMoreGenre ? (
+                            <>
+                              <Loader2 size={14} className="animate-spin text-white" />
+                              <span>Loading more tracks...</span>
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown size={15} className="group-hover:translate-y-0.5 transition-transform text-white/80" />
+                              <span>Load More {activeGenre !== 'All' ? activeGenre : ''} {activeMood !== 'All' ? activeMood : ''} Songs</span>
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-xs text-white/40 py-2">
+                          <Sparkles size={13} className="opacity-60" />
+                          <span>You've reached the end of this selection ({genreTracks.length} tracks loaded)</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -481,7 +543,7 @@ export default function MainContent() {
                       <SectionTitle>Recommended For You</SectionTitle>
                       <span className="text-xs text-white/40">{recList.length} tracks</span>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                       {recList.map((t, i) => (
                         <AlbumCard key={t.id} track={t} delay={i * 60} />
                       ))}
@@ -511,7 +573,7 @@ export default function MainContent() {
                             className="w-16 h-16 rounded-full object-cover shadow-lg mb-2 group-hover:ring-2 group-hover:ring-white/40 transition-all"
                           />
                           <p className="text-xs font-bold text-white truncate max-w-full">{artist.name}</p>
-                          <span className="text-[10px] text-white/40">{artist.genre}</span>
+                          <span className="text-[10px] text-white/40">{(artist.genre || '').replace(/youtube\s*music/gi, 'Tunely')}</span>
                         </div>
                       ))}
                     </div>
@@ -525,7 +587,7 @@ export default function MainContent() {
                       <SectionTitle>Recently Streamed</SectionTitle>
                       <span className="text-xs text-white/40">{recentList.length} tracks</span>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                       {recentList.map((t, i) => (
                         <AlbumCard key={`rec-${t.id}`} track={t} delay={i * 40} />
                       ))}
@@ -560,23 +622,21 @@ export default function MainContent() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSearchSource('ytm')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    searchSource === 'ytm'
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${searchSource === 'ytm'
                       ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
                       : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10'
-                  }`}
+                    }`}
                 >
                   <Radio size={13} />
-                  <span>YouTube Music (Search Millions)</span>
+                  <span>Tunely Music (Search Millions)</span>
                 </button>
 
                 <button
                   onClick={() => setSearchSource('all')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    searchSource === 'all'
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${searchSource === 'all'
                       ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]'
                       : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10'
-                  }`}
+                    }`}
                 >
                   <Disc size={13} />
                   <span>Tunely Audio Catalog</span>
@@ -591,7 +651,7 @@ export default function MainContent() {
                   <div className="flex items-center gap-2">
                     <Radio size={18} className="text-white" />
                     <SectionTitle>
-                      {searchQuery.trim() ? `YouTube Music Results for "${searchQuery}"` : 'Trending on YouTube Music'}
+                      {searchQuery.trim() ? `Tunely Results for "${searchQuery}"` : 'Trending on Tunely'}
                     </SectionTitle>
                   </div>
                   {isYtmLoading && <span className="text-xs text-white/70 animate-pulse">Searching catalog...</span>}
@@ -599,7 +659,7 @@ export default function MainContent() {
 
                 {searchQuery.trim() ? (
                   displayedYtmTracks.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                       {displayedYtmTracks.map((t, i) => (
                         <AlbumCard key={t.id} track={t} delay={i * 30} />
                       ))}
@@ -607,12 +667,12 @@ export default function MainContent() {
                   ) : !isYtmLoading ? (
                     <div className="flex flex-col items-center justify-center h-48 text-white/40 text-center">
                       <Search size={36} className="mb-2 opacity-40" />
-                      <p className="text-sm">Type any artist or song name above to search YouTube Music</p>
+                      <p className="text-sm">Type any artist or song name above to search </p>
                     </div>
                   ) : null
                 ) : (
                   <div className="space-y-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                       {(ytmTrending.length > 0 ? ytmTrending : effectiveTracks).map((t, i) => (
                         <AlbumCard key={t.id} track={t} delay={i * 30} />
                       ))}
@@ -622,7 +682,7 @@ export default function MainContent() {
                     <div className="pt-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <SectionTitle>Browse by Genre & Mood</SectionTitle>
-                        <span className="text-xs text-white/40">Powered by YouTube Music</span>
+                        <span className="text-xs text-white/40">Powered by Your Energy</span>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 gap-3">
                         {genresList.filter((g) => g.name !== 'All').map((g) => (
@@ -637,7 +697,7 @@ export default function MainContent() {
                             <div>
                               <span className="text-2xl mb-1 block group-hover:scale-110 transition-transform">{g.icon}</span>
                               <h4 className="text-sm font-bold text-white tracking-tight">{g.name}</h4>
-                              <p className="text-[10px] text-white/50">YouTube Music Mix</p>
+                              <p className="text-[10px] text-white/50">Tunely Mix</p>
                             </div>
                             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                               <Play size={14} className="fill-white text-white ml-0.5" />
@@ -659,14 +719,14 @@ export default function MainContent() {
                 </div>
 
                 {filteredCatalog.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     {filteredCatalog.map((t, i) => (
                       <AlbumCard key={t.id} track={t} delay={i * 30} />
                     ))}
                   </div>
                 ) : (
                   <div className="py-16 text-center text-white/40 text-xs">
-                    No matching catalog songs found. Try searching on YouTube Music!
+                    No matching found. Try searching again!
                   </div>
                 )}
               </div>
@@ -708,7 +768,7 @@ export default function MainContent() {
             {/* Liked Tracks Grid */}
             {likedTracks.length > 0 ? (
               <section>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                   {likedTracks.map((t, i) => (
                     <AlbumCard key={t.videoId || t.id || `liked-${i}`} track={t} delay={i * 30} />
                   ))}
@@ -733,7 +793,7 @@ export default function MainContent() {
           <div className="space-y-6">
             {/* Liked Songs Hero Card */}
             <div
-              onClick={() => {}}
+              onClick={() => { }}
               className="rounded-3xl p-6 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-transparent border border-white/15 flex items-center justify-between shadow-2xl"
             >
               <div className="flex items-center gap-4">
@@ -764,7 +824,7 @@ export default function MainContent() {
                   <Download size={16} className="text-white/80" />
                   <SectionTitle>Downloaded Offline ({offlineTrackList.length})</SectionTitle>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                   {offlineTrackList.map((t, i) => (
                     <AlbumCard key={`offline-${t.videoId || t.id || i}`} track={t} delay={i * 40} />
                   ))}
@@ -776,7 +836,7 @@ export default function MainContent() {
             {likedTracks.length > 0 && (
               <section>
                 <SectionTitle>Your Favorites</SectionTitle>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 mt-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-3">
                   {likedTracks.map((t, i) => (
                     <AlbumCard key={t.videoId || t.id || `fav-${i}`} track={t} delay={i * 50} />
                   ))}
@@ -821,8 +881,8 @@ export default function MainContent() {
                   <Clock size={16} className="text-white/60" />
                   <SectionTitle>Listening History</SectionTitle>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-                  {history.slice(0, 8).map((t, i) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                  {history.slice(0, 12).map((t, i) => (
                     <AlbumCard key={`hist-${t.videoId || t.id || i}`} track={t} delay={i * 50} />
                   ))}
                 </div>
@@ -834,6 +894,11 @@ export default function MainContent() {
         {/* ── TAB 5: SETTINGS ────────────────────────────────────── */}
         {activeTab === 'settings' && (
           <SettingsPage />
+        )}
+
+        {/* ── TAB 6: PROFILE & ACCOUNT ──────────────────────────── */}
+        {activeTab === 'profile' && (
+          <ProfilePage />
         )}
       </div>
 

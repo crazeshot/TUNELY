@@ -1,0 +1,55 @@
+name: Build Tunely Windows App
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "frontend/src-tauri"
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Build Tauri Desktop App
+        run: |
+          cd frontend
+          npm run tauri build
+
+      - name: Upload Windows Executable (.exe) & Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tunely-Windows-App
+          path: |
+            frontend/src-tauri/target/release/tunely.exe
+            frontend/src-tauri/target/release/Tunely.exe
+            frontend/src-tauri/target/release/bundle/nsis/*.exe
+            frontend/src-tauri/target/release/bundle/msi/*.msi
+          if-no-files-found: warn

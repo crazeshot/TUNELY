@@ -578,19 +578,19 @@ export function PlayerProvider({ children }) {
           if (restQueue.length > 0) {
             setQueue(restQueue);
           }
-          showToast(`🎵 Autoplaying related from YouTube Music: "${nextTrack.title}"`);
+          showToast(`🎵 Autoplaying related from Tunely: "${nextTrack.title}"`);
           playTrack(nextTrack);
           return;
         }
 
-        // Fallback to YouTube Music trending if related query was empty
+        // Fallback to Tunely trending if related query was empty
         const trending = await api.getYtmTrending();
         const unplayedTrending = (trending || []).filter(
           (t) => t && t.videoId !== vid && !historyIds.has(t.videoId)
         );
         const nextTrending = unplayedTrending[0] || (trending && trending[0]);
         if (nextTrending) {
-          showToast(`🎵 Autoplaying trending from YouTube Music: "${nextTrending.title}"`);
+          showToast(`🎵 Autoplaying trending on Tunely: "${nextTrending.title}"`);
           playTrack(nextTrending);
           return;
         }
