@@ -510,9 +510,19 @@ def ytm_genre_mood_view(request):
     })
 
 
-@api_view(['GET'])
+CHUNK_SIZE = 1024 * 1024  # 1MB bounded byte-range chunk window for RFC 7233 compliance
+
+
+@api_view(['GET', 'HEAD', 'OPTIONS'])
 @permission_classes([AllowAny])
 def ytm_stream_view(request, video_id):
+    if request.method == 'OPTIONS':
+        res = HttpResponse(status=200)
+        res['Access-Control-Allow-Origin'] = '*'
+        res['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+        res['Access-Control-Allow-Headers'] = '*'
+        return res
+
     stream_url = ytmusic_service.get_stream_url(video_id)
     if not stream_url:
         return Response({'error': 'Audio stream not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -520,23 +530,53 @@ def ytm_stream_view(request, video_id):
     if request.query_params.get('json') == '1':
         return Response({'stream_url': stream_url})
 
+    if request.method == 'HEAD':
+        try:
+            head_resp = requests.head(stream_url, timeout=8)
+            res = HttpResponse(status=200, content_type=head_resp.headers.get('Content-Type', 'audio/mp4'))
+            res['Accept-Ranges'] = 'bytes'
+            if 'Content-Length' in head_resp.headers:
+                res['Content-Length'] = head_resp.headers['Content-Length']
+            res['Access-Control-Allow-Origin'] = '*'
+            res['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+            res['Access-Control-Allow-Headers'] = '*'
+            return res
+        except Exception:
+            return HttpResponse(status=200)
+
     try:
+        range_header = request.META.get('HTTP_RANGE', '').strip()
         req_headers = {}
-        if 'HTTP_RANGE' in request.META:
-            req_headers['Range'] = request.META['HTTP_RANGE']
 
-        upstream = requests.get(stream_url, headers=req_headers, stream=True, timeout=12)
+        if range_header.startswith('bytes='):
+            raw_range = range_header[6:].split('-')
+            start_str = raw_range[0].strip()
+            end_str = raw_range[1].strip() if len(raw_range) > 1 else ''
 
-        def iter_stream():
-            for chunk in upstream.iter_content(chunk_size=128 * 1024):
-                if chunk:
-                    yield chunk
+            try:
+                start = int(start_str) if start_str else 0
+            except ValueError:
+                start = 0
+
+            if end_str:
+                try:
+                    end = int(end_str)
+                except ValueError:
+                    end = start + CHUNK_SIZE - 1
+            else:
+                end = start + CHUNK_SIZE - 1
+
+            req_headers['Range'] = f'bytes={start}-{end}'
+        else:
+            req_headers['Range'] = f'bytes=0-{CHUNK_SIZE - 1}'
+
+        upstream = requests.get(stream_url, headers=req_headers, timeout=12)
 
         status_code = upstream.status_code if upstream.status_code in [200, 206] else 200
         content_type = upstream.headers.get('Content-Type', 'audio/mp4')
-        response = StreamingHttpResponse(iter_stream(), status=status_code, content_type=content_type)
+        response = HttpResponse(upstream.content, status=status_code, content_type=content_type)
         response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        response['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
         response['Access-Control-Allow-Headers'] = '*'
         response['Accept-Ranges'] = 'bytes'
         for h in ['Content-Range', 'Content-Length']:

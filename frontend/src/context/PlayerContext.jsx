@@ -69,18 +69,19 @@ export function PlayerProvider({ children }) {
   const [audioDuration, setAudioDuration] = useState(null);
   const trackDuration = useMemo(() => parseTrackDuration(currentTrack), [currentTrack]);
   const duration = useMemo(() => {
-    if (audioDuration && isFinite(audioDuration) && audioDuration > 0) {
-      if (trackDuration > 0) {
-        const ratio = audioDuration / trackDuration;
-        // If audioDuration is doubled (> 1.35x) or halved (< 0.65x) due to HE-AAC / SBR 22050Hz bugs,
-        // stick strictly to the authentic metadata duration.
-        if (ratio > 1.35 || ratio < 0.65) {
-          return trackDuration;
-        }
+    // If authentic metadata duration is known, it is authoritative!
+    // Never allow dynamic chunk buffering, AVPlayer live estimation, or HE-AAC SBR doubling
+    // to override or expand the genuine song duration.
+    if (trackDuration > 0) {
+      if (audioDuration && isFinite(audioDuration) && Math.abs(audioDuration - trackDuration) <= 3) {
+        return audioDuration;
       }
+      return trackDuration;
+    }
+    if (audioDuration && isFinite(audioDuration) && audioDuration > 0) {
       return audioDuration;
     }
-    return trackDuration > 0 ? trackDuration : 240;
+    return 240;
   }, [audioDuration, trackDuration]);
 
   const durationRef = useRef(duration);
@@ -519,6 +520,8 @@ export function PlayerProvider({ children }) {
 
       if (track.videoId) {
         streamUrl = `http://127.0.0.1:8000/api/ytm/stream/${track.videoId}/`;
+      } else if (streamUrl && streamUrl.startsWith('/')) {
+        streamUrl = `http://127.0.0.1:8000${streamUrl}`;
       }
 
       if (streamUrl) {
@@ -553,6 +556,8 @@ export function PlayerProvider({ children }) {
           let streamUrl = currentTrack.audio_url;
           if (currentTrack.videoId) {
             streamUrl = `http://127.0.0.1:8000/api/ytm/stream/${currentTrack.videoId}/`;
+          } else if (streamUrl && streamUrl.startsWith('/')) {
+            streamUrl = `http://127.0.0.1:8000${streamUrl}`;
           }
           if (streamUrl) {
             audio.src = streamUrl;

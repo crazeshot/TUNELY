@@ -78,11 +78,12 @@ def run():
     except Exception as e:
         logging.warning(f"Migration warning: {e}")
 
-    # 5. Check if tracks table has initial songs; auto-seed if empty
+    # 5. Check if tracks table has initial songs or needs upgrading to YTM streams
     try:
         from api.models import Track
-        if Track.objects.count() == 0:
-            logging.info("Database has 0 tracks; auto-seeding initial catalogue...")
+        needs_seed = Track.objects.count() == 0 or Track.objects.filter(audio_url__contains='pixabay.com').exists()
+        if needs_seed:
+            logging.info("Updating catalogue with high-fidelity streams and precise durations...")
             call_command('seed_music')
             logging.info(f"Seeding finished. Total tracks: {Track.objects.count()}")
     except Exception as e:

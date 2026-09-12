@@ -157,15 +157,13 @@ class Command(BaseCommand):
         albums_dict = {}
         for alb in albums_data:
             album = Album.objects.create(**alb)
-            albums_dict[alb['title']] = album
-
-        # 3. Tracks with precise .lrc timestamps
+            albums_dict[alb['title']] = album        # 3. Tracks with precise durations and high-fidelity streams
         tracks_data = [
             {
                 'title': 'Midnight City',
                 'artist': artists_dict['M83'],
                 'album': albums_dict['Hurry Up, We’re Dreaming'],
-                'audio_url': 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3',
+                'audio_url': '/api/ytm/stream/dX3k_QDnzHE/',
                 'cover_url': 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
                 'duration': '4:03',
                 'duration_seconds': 243,
@@ -191,10 +189,10 @@ class Command(BaseCommand):
                 'title': 'Borderline',
                 'artist': artists_dict['Tame Impala'],
                 'album': albums_dict['The Slow Rush'],
-                'audio_url': 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=electronic-future-beats-117997.mp3',
+                'audio_url': '/api/ytm/stream/2g5xkLqIElU/',
                 'cover_url': 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=600&auto=format&fit=crop&q=80',
-                'duration': '3:57',
-                'duration_seconds': 237,
+                'duration': '3:58',
+                'duration_seconds': 238,
                 'genre': 'Psychedelic Pop',
                 'bpm': 120,
                 'audio_key': 'D Major',
@@ -213,10 +211,10 @@ class Command(BaseCommand):
                 'title': 'King',
                 'artist': artists_dict['Florence + The Machine'],
                 'album': albums_dict['Dance Fever'],
-                'audio_url': 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=tuesday-glitch-ambient-110940.mp3',
+                'audio_url': '/api/ytm/stream/J4ShCAYAjO0/',
                 'cover_url': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
-                'duration': '3:58',
-                'duration_seconds': 238,
+                'duration': '4:40',
+                'duration_seconds': 280,
                 'genre': 'Indie Rock',
                 'bpm': 116,
                 'audio_key': 'G Minor',
@@ -233,7 +231,7 @@ class Command(BaseCommand):
                 'title': 'Blinding Lights',
                 'artist': artists_dict['The Weeknd'],
                 'album': albums_dict['After Hours'],
-                'audio_url': 'https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792cb.mp3?filename=the-beat-of-nature-122841.mp3',
+                'audio_url': '/api/ytm/stream/4NRXx6U8ABQ/',
                 'cover_url': 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
                 'duration': '3:20',
                 'duration_seconds': 200,
@@ -255,7 +253,7 @@ class Command(BaseCommand):
                 'title': 'Nude',
                 'artist': artists_dict['Radiohead'],
                 'album': albums_dict['In Rainbows'],
-                'audio_url': 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_bb630cc098.mp3?filename=ambient-piano-amp-strings-10711.mp3',
+                'audio_url': '/api/ytm/stream/4-aiSnnghQk/',
                 'cover_url': 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&auto=format&fit=crop&q=80',
                 'duration': '4:15',
                 'duration_seconds': 255,
@@ -269,15 +267,15 @@ class Command(BaseCommand):
 [00:32.00] They're not gonna happen
 [00:44.00] You paint yourself white
 [00:52.00] And fill up with noise
-[01:00.00] There'll be something missing""",
+[00:52.00] There'll be something missing""",
             },
             {
                 'title': '22 (OVER S∞∞N)',
                 'artist': artists_dict['Bon Iver'],
-                'audio_url': 'https://cdn.pixabay.com/download/audio/2022/11/06/audio_c35f997cb6.mp3?filename=chill-abstract-intention-12099.mp3',
+                'audio_url': '/api/ytm/stream/JTeZuIbj1y0/',
                 'cover_url': 'https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=600&auto=format&fit=crop&q=80',
-                'duration': '3:57',
-                'duration_seconds': 237,
+                'duration': '2:48',
+                'duration_seconds': 168,
                 'genre': 'Indie Folk',
                 'bpm': 75,
                 'audio_key': 'F# Major',
@@ -293,7 +291,7 @@ class Command(BaseCommand):
             {
                 'title': 'Kyoto',
                 'artist': artists_dict['Phoebe Bridgers'],
-                'audio_url': 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c32c4d682e.mp3?filename=lifelike-126735.mp3',
+                'audio_url': '/api/ytm/stream/xwtdhWltSIg/',
                 'cover_url': 'https://images.unsplash.com/photo-1520523839898-50712825e3a7?w=600&auto=format&fit=crop&q=80',
                 'duration': '3:05',
                 'duration_seconds': 185,
@@ -313,10 +311,10 @@ class Command(BaseCommand):
                 'title': 'Pink + White',
                 'artist': artists_dict['Frank Ocean'],
                 'album': albums_dict['Blonde'],
-                'audio_url': 'https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3?filename=smoke-143172.mp3',
+                'audio_url': '/api/ytm/stream/9cHbvRUALrc/',
                 'cover_url': 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&auto=format&fit=crop&q=80',
-                'duration': '3:04',
-                'duration_seconds': 184,
+                'duration': '3:05',
+                'duration_seconds': 185,
                 'genre': 'R&B / Soul',
                 'bpm': 80,
                 'audio_key': 'A Major',
@@ -332,10 +330,10 @@ class Command(BaseCommand):
             {
                 'title': 'Green Light',
                 'artist': artists_dict['Lorde'],
-                'audio_url': 'https://cdn.pixabay.com/download/audio/2022/04/27/audio_3025272a8c.mp3?filename=inspire-ambient-111327.mp3',
+                'audio_url': '/api/ytm/stream/dMK_npDG12Q/',
                 'cover_url': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
-                'duration': '3:53',
-                'duration_seconds': 233,
+                'duration': '3:54',
+                'duration_seconds': 234,
                 'genre': 'Electropop',
                 'bpm': 129,
                 'audio_key': 'A Major',
@@ -351,7 +349,7 @@ class Command(BaseCommand):
             {
                 'title': 'Get Lucky',
                 'artist': artists_dict['Daft Punk'],
-                'audio_url': 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=electronic-future-beats-117997.mp3',
+                'audio_url': '/api/ytm/stream/5NV6Rdv1a3I/',
                 'cover_url': 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&auto=format&fit=crop&q=80',
                 'duration': '4:08',
                 'duration_seconds': 248,
@@ -373,32 +371,39 @@ class Command(BaseCommand):
 
         created_tracks = []
         for t in tracks_data:
-            track = Track.objects.create(**t)
+            track, _ = Track.objects.update_or_create(
+                title=t['title'],
+                defaults=t
+            )
             created_tracks.append(track)
 
         # 4. Favorite a couple tracks for demo user
-        FavoriteTrack.objects.create(user=demo_user, track=created_tracks[0])
-        FavoriteTrack.objects.create(user=demo_user, track=created_tracks[3])
+        FavoriteTrack.objects.get_or_create(user=demo_user, track=created_tracks[0])
+        FavoriteTrack.objects.get_or_create(user=demo_user, track=created_tracks[3])
 
         # 5. Playlists
-        p1 = Playlist.objects.create(
+        p1, _ = Playlist.objects.get_or_create(
             user=demo_user,
             title='Late Night Vibrations',
-            description='Curated dreamy synths and late-night aesthetic frequencies.',
-            cover_url='https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-            is_public=True,
+            defaults={
+                'description': 'Curated dreamy synths and late-night aesthetic frequencies.',
+                'cover_url': 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+                'is_public': True,
+            }
         )
         for i, track in enumerate([created_tracks[0], created_tracks[1], created_tracks[3], created_tracks[7]]):
-            PlaylistItem.objects.create(playlist=p1, track=track, order=i)
+            PlaylistItem.objects.get_or_create(playlist=p1, track=track, defaults={'order': i})
 
-        p2 = Playlist.objects.create(
+        p2, _ = Playlist.objects.get_or_create(
             user=demo_user,
             title='Indie & Melancholy',
-            description='Deep emotional lyrics, acoustic echoes, and sublime soundscapes.',
-            cover_url='https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=600&auto=format&fit=crop&q=80',
-            is_public=True,
+            defaults={
+                'description': 'Deep emotional lyrics, acoustic echoes, and sublime soundscapes.',
+                'cover_url': 'https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=600&auto=format&fit=crop&q=80',
+                'is_public': True,
+            }
         )
         for i, track in enumerate([created_tracks[2], created_tracks[4], created_tracks[5], created_tracks[6]]):
-            PlaylistItem.objects.create(playlist=p2, track=track, order=i)
+            PlaylistItem.objects.get_or_create(playlist=p2, track=track, defaults={'order': i})
 
         self.stdout.write(self.style.SUCCESS(f'Successfully seeded {Artist.objects.count()} artists, {Album.objects.count()} albums, {Track.objects.count()} tracks with .LRC synced lyrics, and demo user "{demo_user.username}".'))
