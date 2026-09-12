@@ -17,13 +17,58 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div id="tunely-fatal-error" style="display:none; position:fixed; inset:0; background:#141518; color:#f87171; padding:32px; font-family:system-ui, sans-serif; z-index:999999; overflow:auto;">
+      <div style="max-width:640px; margin:40px auto; background:#1e1e24; border:1px solid #3f3f46; border-radius:12px; padding:24px;">
+        <h2 style="color:#ef4444; margin-bottom:12px; font-size:18px;">Tunely Desktop Runtime Notice</h2>
+        <p style="color:#a1a1aa; font-size:13px; margin-bottom:16px;">An error prevented the desktop interface from rendering:</p>
+        <pre id="tunely-fatal-details" style="white-space:pre-wrap; font-size:12px; color:#e2e8f0; background:#121215; padding:12px; border-radius:6px; border:1px solid #27272a; max-height:220px; overflow:auto;"></pre>
+        <button onclick="location.reload()" style="margin-top:16px; padding:8px 18px; background:#fff; color:#000; font-weight:600; border:none; border-radius:9999px; cursor:pointer;">Reload</button>
+      </div>
+    </div>
     <script>
+      window.addEventListener('error', function(e) {
+        var screen = document.getElementById('tunely-fatal-error');
+        var details = document.getElementById('tunely-fatal-details');
+        if (screen && details) {
+          screen.style.display = 'block';
+          details.textContent += (e.message || e) + '\n' + (e.filename ? e.filename + ':' + e.lineno + '\n' : '') + (e.error && e.error.stack ? e.error.stack : '') + '\n\n';
+        }
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        var screen = document.getElementById('tunely-fatal-error');
+        var details = document.getElementById('tunely-fatal-details');
+        if (screen && details) {
+          screen.style.display = 'block';
+          details.textContent += 'Unhandled Promise Rejection:\n' + (e.reason && e.reason.stack ? e.reason.stack : (e.reason || e)) + '\n\n';
+        }
+      });
+
+      // Service workers are strictly for browser PWA and cause blank screens in WebView2/Tauri
+      var isTauri = window.__TAURI_INTERNALS__ !== undefined ||
+                    window.__TAURI__ !== undefined ||
+                    location.hostname === 'tauri.localhost' ||
+                    location.protocol === 'tauri:';
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
-        });
+        if (isTauri) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (var i = 0; i < registrations.length; i++) {
+              registrations[i].unregister();
+            }
+          });
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              for (var i = 0; i < keys.length; i++) {
+                caches.delete(keys[i]);
+              }
+            });
+          }
+        } else {
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js').catch(function() {});
+          });
+        }
       }
     </script>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

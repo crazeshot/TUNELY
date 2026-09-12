@@ -75,22 +75,27 @@ function initLiquidEtherEngine(container, props, { isVisibleRef, rafRef }) {
       this.container = container;
       this.pixelRatio = 1.0;
       this.resize();
-      this.renderer = new THREE.WebGLRenderer({
-        antialias: false,
-        alpha: true,
-        depth: false,
-        stencil: false,
-        powerPreference: 'high-performance',
-        precision: 'mediump',
-        preserveDrawingBuffer: false,
-      });
-      this.renderer.autoClear = false;
-      this.renderer.setClearColor(new THREE.Color(0x000000), 0);
-      this.renderer.setPixelRatio(1.0);
-      this.renderer.setSize(this.width, this.height, false);
-      this.renderer.domElement.style.width = '100%';
-      this.renderer.domElement.style.height = '100%';
-      this.renderer.domElement.style.display = 'block';
+      try {
+        this.renderer = new THREE.WebGLRenderer({
+          antialias: false,
+          alpha: true,
+          depth: false,
+          stencil: false,
+          powerPreference: 'high-performance',
+          precision: 'mediump',
+          preserveDrawingBuffer: false,
+        });
+        this.renderer.autoClear = false;
+        this.renderer.setClearColor(new THREE.Color(0x000000), 0);
+        this.renderer.setPixelRatio(1.0);
+        this.renderer.setSize(this.width, this.height, false);
+        this.renderer.domElement.style.width = '100%';
+        this.renderer.domElement.style.height = '100%';
+        this.renderer.domElement.style.display = 'block';
+      } catch (err) {
+        console.warn('[LiquidEther] WebGLRenderer creation failed:', err);
+        this.renderer = null;
+      }
       this.lastTime = performance.now();
     }
     resize() {
@@ -1063,30 +1068,36 @@ function LiquidEther({
     if (!mountRef.current) return;
     const container = mountRef.current;
 
-    const webgl = initLiquidEtherEngine(
-      container,
-      {
-        mouseForce,
-        cursorSize,
-        isViscous,
-        viscous,
-        iterationsViscous,
-        iterationsPoisson,
-        dt,
-        BFECC,
-        resolution,
-        isBounce,
-        colors,
-        autoDemo,
-        autoSpeed,
-        autoIntensity,
-        takeoverDuration,
-        autoResumeDelay,
-        autoRampDuration,
-      },
-      { isVisibleRef, rafRef }
-    );
+    let webgl = null;
+    try {
+      webgl = initLiquidEtherEngine(
+        container,
+        {
+          mouseForce,
+          cursorSize,
+          isViscous,
+          viscous,
+          iterationsViscous,
+          iterationsPoisson,
+          dt,
+          BFECC,
+          resolution,
+          isBounce,
+          colors,
+          autoDemo,
+          autoSpeed,
+          autoIntensity,
+          takeoverDuration,
+          autoResumeDelay,
+          autoRampDuration,
+        },
+        { isVisibleRef, rafRef }
+      );
+    } catch (err) {
+      console.warn('[LiquidEther] Engine failed to start:', err);
+    }
     webglRef.current = webgl;
+    if (!webgl) return;
 
     const io = new IntersectionObserver(
       entries => {
