@@ -23,7 +23,7 @@ def get_env_list(name, default=''):
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-change-me-for-production')
 DEBUG = get_env_bool('DJANGO_DEBUG', True)
-ALLOWED_HOSTS = get_env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver')
+ALLOWED_HOSTS = get_env_list('DJANGO_ALLOWED_HOSTS', '*')
 
 
 INSTALLED_APPS = [
@@ -115,6 +115,9 @@ CORS_ALLOWED_ORIGINS = get_env_list(
     'http://localhost:5173,http://127.0.0.1:5173,tauri://localhost,https://tauri.localhost,http://tauri.localhost',
 )
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^.*$",
+]
 CSRF_TRUSTED_ORIGINS = get_env_list(
     'DJANGO_CSRF_TRUSTED_ORIGINS',
     'http://localhost:5173,http://127.0.0.1:5173,tauri://localhost,https://tauri.localhost,http://tauri.localhost',

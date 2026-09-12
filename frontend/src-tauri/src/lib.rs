@@ -20,57 +20,47 @@ fn find_backend_executable(app: &tauri::AppHandle) -> Option<PathBuf> {
         "tunely-backend-x86_64-apple-darwin"
     };
 
+    let mut candidate_dirs: Vec<PathBuf> = Vec::new();
+
     // 1. Next to the main executable (in MacOS folder of .app on mac, or release folder on windows)
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(dir) = exe_path.parent() {
-            let p1 = dir.join(bin_name);
-            if p1.exists() {
-                return Some(p1);
-            }
-            let p2 = dir.join(arch_bin_name);
-            if p2.exists() {
-                return Some(p2);
-            }
-            // On macOS, check inside Contents/MacOS from Resources
-            let p_macos = dir.join("../MacOS").join(bin_name);
-            if p_macos.exists() {
-                return Some(p_macos);
-            }
+            candidate_dirs.push(dir.to_path_buf());
+            candidate_dirs.push(dir.join("../MacOS"));
+            candidate_dirs.push(dir.join("../Resources"));
+            candidate_dirs.push(dir.join("../Resources/binaries"));
         }
     }
 
     // 2. In resource directory
     if let Ok(res_dir) = app.path().resource_dir() {
-        let p = res_dir.join(bin_name);
-        if p.exists() {
-            return Some(p);
-        }
-        let p_bin = res_dir.join("binaries").join(arch_bin_name);
-        if p_bin.exists() {
-            return Some(p_bin);
-        }
-        let p_macos = res_dir.join("../MacOS").join(bin_name);
-        if p_macos.exists() {
-            return Some(p_macos);
-        }
+        candidate_dirs.push(res_dir.clone());
+        candidate_dirs.push(res_dir.join("binaries"));
+        candidate_dirs.push(res_dir.join("../MacOS"));
     }
 
-    // 3. In relative paths for development
-    let dev_paths = [
-        format!("binaries/{}", arch_bin_name),
-        format!("src-tauri/binaries/{}", arch_bin_name),
-        format!("../src-tauri/binaries/{}", arch_bin_name),
-        "../../backend/dist/tunely-backend".to_string(),
-        "backend/dist/tunely-backend".to_string(),
-        "../backend/dist/tunely-backend".to_string(),
-        "../../backend/dist/tunely-backend.exe".to_string(),
-        "backend/dist/tunely-backend.exe".to_string(),
-    ];
+    // 3. Dev & working directory paths
+    if let Ok(cwd) = std::env::current_dir() {
+        candidate_dirs.push(cwd.clone());
+        candidate_dirs.push(cwd.join("binaries"));
+        candidate_dirs.push(cwd.join("src-tauri/binaries"));
+        candidate_dirs.push(cwd.join("../src-tauri/binaries"));
+        candidate_dirs.push(cwd.join("backend/dist"));
+        candidate_dirs.push(cwd.join("../backend/dist"));
+        candidate_dirs.push(cwd.join("../../backend/dist"));
+    }
 
-    for rel in &dev_paths {
-        let path = PathBuf::from(rel);
-        if path.exists() {
-            return Some(path);
+    let bin_names = [bin_name, arch_bin_name];
+
+    for dir in &candidate_dirs {
+        for name in &bin_names {
+            let full_path = dir.join(name);
+            if full_path.is_file() {
+                if let Ok(canonical) = full_path.canonicalize() {
+                    return Some(canonical);
+                }
+                return Some(full_path);
+            }
         }
     }
 
@@ -97,7 +87,26 @@ pub fn run() {
                 log::info!("Backend server is already active on 127.0.0.1:8000.");
             } else if let Some(backend_bin) = find_backend_executable(app.handle()) {
                 log::info!("Starting backend sidecar from {:?}", backend_bin);
+
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    if let Ok(metadata) = std::fs::metadata(&backend_bin) {
+                        let mut perms = metadata.permissions();
+                        let mode = perms.mode();
+                        if mode & 0o111 == 0 {
+                            perms.set_mode(mode | 0o755);
+                            let _ = std::fs::set_permissions(&backend_bin, perms);
+                        }
+                    }
+                }
+
                 let mut cmd = std::process::Command::new(&backend_bin);
+                if let Some(parent) = backend_bin.parent() {
+                    cmd.current_dir(parent);
+                }
+
+                cmd.stdin(std::process::Stdio::null());
 
                 #[cfg(windows)]
                 {
@@ -107,7 +116,7 @@ pub fn run() {
 
                 match cmd.spawn() {
                     Ok(child) => {
-                        log::info!("Backend sidecar spawned successfully.");
+                        log::info!("Backend sidecar spawned successfully (PID: {}).", child.id());
                         *backend_child.lock().unwrap() = Some(child);
                     }
                     Err(err) => {

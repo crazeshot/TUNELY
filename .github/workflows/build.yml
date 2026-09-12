@@ -46,6 +46,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt pyinstaller
           cd backend
+          python manage.py migrate
+          python manage.py seed_music
           pyinstaller --clean --noconfirm tunely_backend.spec
           New-Item -ItemType Directory -Force -Path ../frontend/src-tauri/binaries
           Copy-Item dist/tunely-backend.exe -Destination ../frontend/src-tauri/binaries/tunely-backend-x86_64-pc-windows-msvc.exe
@@ -106,12 +108,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt pyinstaller
           cd backend
+          python manage.py migrate
+          python manage.py seed_music
           pyinstaller --clean --noconfirm tunely_backend.spec
           codesign --force --options runtime --entitlements ../frontend/src-tauri/Entitlements.plist --deep --sign - dist/tunely-backend
           mkdir -p ../frontend/src-tauri/binaries
           cp dist/tunely-backend ../frontend/src-tauri/binaries/tunely-backend-aarch64-apple-darwin
+          cp dist/tunely-backend ../frontend/src-tauri/binaries/tunely-backend
           chmod +x ../frontend/src-tauri/binaries/tunely-backend-aarch64-apple-darwin
+          chmod +x ../frontend/src-tauri/binaries/tunely-backend
           codesign --force --options runtime --entitlements ../frontend/src-tauri/Entitlements.plist --deep --sign - ../frontend/src-tauri/binaries/tunely-backend-aarch64-apple-darwin
+          codesign --force --options runtime --entitlements ../frontend/src-tauri/Entitlements.plist --deep --sign - ../frontend/src-tauri/binaries/tunely-backend
 
       - name: Install Frontend Dependencies
         run: |
@@ -123,6 +130,7 @@ jobs:
           cd frontend
           npm run tauri build
           if [ -d "src-tauri/target/release/bundle/macos/Tunely.app" ]; then
+            find "src-tauri/target/release/bundle/macos/Tunely.app" -name "tunely-backend*" -exec chmod +x {} +
             codesign --force --options runtime --entitlements src-tauri/Entitlements.plist --deep --sign - "src-tauri/target/release/bundle/macos/Tunely.app"
             codesign --verify --deep --strict --verbose=2 "src-tauri/target/release/bundle/macos/Tunely.app"
           fi

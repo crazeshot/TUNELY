@@ -7,6 +7,8 @@ block_cipher = None
 datas = []
 if os.path.exists('db.sqlite3'):
     datas.append(('db.sqlite3', '.'))
+if os.path.exists('api/migrations'):
+    datas.append(('api/migrations', 'api/migrations'))
 
 binaries = []
 hiddenimports = [
@@ -21,10 +23,15 @@ hiddenimports = [
     'api.urls',
     'api.serializers',
     'api.ytmusic_service',
+    'api.management',
+    'api.management.commands',
+    'api.management.commands.seed_music',
     'django.db.backends.sqlite3',
     'django.core.management',
+    'django.core.management.commands',
     'django.core.management.commands.runserver',
     'django.core.management.commands.migrate',
+    'django.core.management.commands.check',
     'rest_framework',
     'rest_framework.authentication',
     'rest_framework.parsers',
@@ -33,7 +40,7 @@ hiddenimports = [
     'rest_framework.authtoken.models',
 ]
 
-for pkg in ['django', 'rest_framework', 'corsheaders', 'ytmusicapi', 'yt_dlp', 'youtube_search_python']:
+for pkg in ['django', 'rest_framework', 'corsheaders', 'ytmusicapi', 'yt_dlp', 'youtube_search_python', 'api']:
     try:
         pkg_datas, pkg_binaries, pkg_hidden = collect_all(pkg)
         datas += pkg_datas

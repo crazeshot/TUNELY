@@ -8,13 +8,15 @@ import { allTracks, initialPlaylists } from '../data/musicData';
 const BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://127.0.0.1:8000/api';
 
 // Safe fetch wrapper that automatically retries connection errors during desktop app startup
-async function robustFetch(url, options = {}, retries = 2) {
+async function robustFetch(url, options = {}, retries = 6) {
   for (let i = 0; i <= retries; i++) {
     try {
       return await window.fetch(url, options);
     } catch (err) {
-      if (i < retries && (err.name === 'TypeError' || err.message?.includes('fetch') || err.message?.includes('network'))) {
-        await new Promise(r => setTimeout(r, 600 * (i + 1)));
+      const msg = (err.message || '').toLowerCase();
+      const isNetworkErr = err.name === 'TypeError' || msg.includes('fetch') || msg.includes('network') || msg.includes('connection');
+      if (i < retries && isNetworkErr) {
+        await new Promise(r => setTimeout(r, 500 * (i + 1)));
         continue;
       }
       throw err;
