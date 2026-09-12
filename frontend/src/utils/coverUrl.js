@@ -4,7 +4,7 @@
  * and direct CDN fetching for open YouTube artwork.
  */
 
-const BASE_URL = 'http://127.0.0.1:8000/api';
+const BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://127.0.0.1:8000/api';
 const FALLBACK = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
 
 // Google domains that enforce strict referrer policies and need server-side proxy
