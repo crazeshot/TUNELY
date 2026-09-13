@@ -68,7 +68,8 @@ class AudioEngine {
     this.reverbEnabled = false;
     this.spatialAudioEnabled = false;
     this.eqBypassed = false;
-    this.fftData = new Uint8Array(128);
+    this.fftData = new Uint8Array(512);
+    this.timeDomainData = new Uint8Array(512);
     this.spatialInterval = null;
   }
 
@@ -82,9 +83,10 @@ class AudioEngine {
     try {
       this.ctx = new AudioContextClass();
       this.analyser = this.ctx.createAnalyser();
-      this.analyser.fftSize = 256;
-      this.analyser.smoothingTimeConstant = 0.82;
+      this.analyser.fftSize = 1024;
+      this.analyser.smoothingTimeConstant = 0.8;
       this.fftData = new Uint8Array(this.analyser.frequencyBinCount);
+      this.timeDomainData = new Uint8Array(this.analyser.frequencyBinCount);
 
       // Preamp Gain Node (-12dB to +12dB)
       this.preampGainNode = this.ctx.createGain();
@@ -320,13 +322,16 @@ class AudioEngine {
     if (!this.analyser) {
       return {
         spectrum: this.fftData,
+        timeDomain: this.timeDomainData,
         bass: 0,
         mid: 0,
         treble: 0,
         average: 0,
+        sampleRate: 44100,
       };
     }
     this.analyser.getByteFrequencyData(this.fftData);
+    this.analyser.getByteTimeDomainData(this.timeDomainData);
 
     const len = this.fftData.length;
     let bassSum = 0;
@@ -334,23 +339,30 @@ class AudioEngine {
     let trebleSum = 0;
     let totalSum = 0;
 
-    const bassEnd = Math.floor(len * 0.15);
-    const midEnd = Math.floor(len * 0.55);
+    // 512 bins up to ~22kHz:
+    // Bass: bins 0 to ~20 (0 to ~860Hz)
+    // Mid: bins 21 to ~120 (~860Hz to ~5.1kHz)
+    // Treble: bins 121 to 380 (~5.1kHz to ~16.3kHz)
+    const bassEnd = Math.max(1, Math.floor(len * 0.05));
+    const midEnd = Math.max(bassEnd + 1, Math.floor(len * 0.25));
+    const trebleEnd = Math.max(midEnd + 1, Math.floor(len * 0.75));
 
     for (let i = 0; i < len; i++) {
       const val = this.fftData[i];
       totalSum += val;
       if (i < bassEnd) bassSum += val;
       else if (i < midEnd) midSum += val;
-      else trebleSum += val;
+      else if (i < trebleEnd) trebleSum += val;
     }
 
     return {
       spectrum: this.fftData,
+      timeDomain: this.timeDomainData,
       bass: bassEnd > 0 ? bassSum / bassEnd : 0,
       mid: midEnd > bassEnd ? midSum / (midEnd - bassEnd) : 0,
-      treble: len > midEnd ? trebleSum / (len - midEnd) : 0,
+      treble: trebleEnd > midEnd ? trebleSum / (trebleEnd - midEnd) : 0,
       average: len > 0 ? totalSum / len : 0,
+      sampleRate: this.ctx?.sampleRate || 44100,
     };
   }
 }

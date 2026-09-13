@@ -142,6 +142,21 @@ export function PlayerProvider({ children }) {
     }
   });
 
+  const [visualMode, setVisualModeState] = useState(() => {
+    try {
+      return localStorage.getItem('tunely_visual_mode') || 'spectrum';
+    } catch {
+      return 'spectrum';
+    }
+  });
+
+  const setVisualMode = useCallback((mode) => {
+    setVisualModeState(mode);
+    try {
+      localStorage.setItem('tunely_visual_mode', mode);
+    } catch {}
+  }, []);
+
   // Offline downloads
   const [downloadedTrackIds, setDownloadedTrackIds] = useState(new Set());
 
@@ -1327,6 +1342,8 @@ export function PlayerProvider({ children }) {
     setPreampGain,
     visualizerTheme,
     setVisualizerTheme,
+    visualMode,
+    setVisualMode,
     getFrequencyData: () => audioEngine.getFrequencyData(),
     getEqualizerResponseCurve: (n) => audioEngine.getEqualizerResponseCurve(n),
     setSleepTimer,

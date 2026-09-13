@@ -20,12 +20,26 @@ import {
   Gauge,
   Palette,
   Maximize2,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
 } from 'lucide-react';
 import { usePlayer } from '../context/usePlayer';
 import AudioCanvasVisualizer, { VISUALIZER_THEMES } from './AudioCanvasVisualizer';
 import UniversalReactPlayer from './UniversalReactPlayer';
 import { parseLRC, getActiveLyricIndex, fetchLyricsFromLRCLIB } from '../services/lyricsService';
 import { getCoverUrl, handleCoverError } from '../utils/coverUrl';
+
+const ALL_VISUAL_MODES = [
+  { id: 'vinyl', label: 'Vinyl & Lyrics', icon: Disc },
+  { id: 'spectrum', label: 'Spectrum', icon: Activity },
+  { id: 'wave', label: 'Harmonic', icon: Waves },
+  { id: 'radial', label: 'Audio Halo', icon: Radio },
+  { id: 'particles', label: 'Cosmic', icon: Sparkles },
+  { id: 'vu-meter', label: 'VU Meter', icon: Gauge },
+  { id: 'matrix', label: 'Cyber Matrix', icon: LayoutGrid },
+  { id: 'video', label: 'Video', icon: Video },
+];
 
 export default function VisualizerModal() {
   const {
@@ -55,10 +69,11 @@ export default function VisualizerModal() {
     setIsEqualizerOpen,
     visualizerTheme,
     setVisualizerTheme,
+    visualMode,
+    setVisualMode,
     getFrequencyData,
   } = usePlayer();
 
-  const [visualMode, setVisualMode] = useState('vinyl'); // 'vinyl' | 'spectrum' | 'wave' | 'radial' | 'particles' | 'vu-meter' | 'video'
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [onlineLyrics, setOnlineLyrics] = useState(null);
   const lyricsContainerRef = useRef(null);
@@ -100,6 +115,27 @@ export default function VisualizerModal() {
       });
     }
   }, [currentLineIndex]);
+
+  const cycleVisualMode = (dir = 1) => {
+    const currentIndex = ALL_VISUAL_MODES.findIndex((m) => m.id === visualMode);
+    const nextIndex = (currentIndex + dir + ALL_VISUAL_MODES.length) % ALL_VISUAL_MODES.length;
+    setVisualMode(ALL_VISUAL_MODES[nextIndex].id);
+  };
+
+  useEffect(() => {
+    if (!isVisualizerOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsVisualizerOpen(false);
+      } else if (e.key === 'ArrowRight' && !e.target.closest('input')) {
+        cycleVisualMode(1);
+      } else if (e.key === 'ArrowLeft' && !e.target.closest('input')) {
+        cycleVisualMode(-1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isVisualizerOpen, visualMode]);
 
   if (!isVisualizerOpen || !currentTrack) return null;
 
@@ -147,90 +183,42 @@ export default function VisualizerModal() {
             </h2>
           </div>
 
-          {/* Visualizer Mode Tabs */}
+          {/* Unified Visualizer Mode Tabs with Quick Prev/Next Toggles */}
           <div className="flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/10 overflow-x-auto no-scrollbar">
             <button
-              onClick={() => setVisualMode('vinyl')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                visualMode === 'vinyl'
-                  ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.25)]'
-                  : 'text-white/60 hover:text-white'
-              }`}
+              onClick={() => cycleVisualMode(-1)}
+              className="p-1 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+              title="Previous Visualizer (Left Arrow)"
             >
-              <Disc size={13} />
-              <span className="hidden sm:inline">Vinyl & Lyrics</span>
+              <ChevronLeft size={14} />
             </button>
 
-            <button
-              onClick={() => setVisualMode('spectrum')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                visualMode === 'spectrum'
-                  ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.25)]'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              <Activity size={13} />
-              <span className="hidden sm:inline">Spectrum</span>
-            </button>
+            {ALL_VISUAL_MODES.map((mode) => {
+              const Icon = mode.icon;
+              const isActive = visualMode === mode.id;
+              return (
+                <button
+                  key={mode.id}
+                  onClick={() => setVisualMode(mode.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                    isActive
+                      ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.3)] scale-[1.02]'
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`}
+                  title={`Switch to ${mode.label}`}
+                >
+                  <Icon size={13} />
+                  <span className="hidden sm:inline">{mode.label}</span>
+                </button>
+              );
+            })}
 
             <button
-              onClick={() => setVisualMode('wave')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                visualMode === 'wave'
-                  ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.25)]'
-                  : 'text-white/60 hover:text-white'
-              }`}
+              onClick={() => cycleVisualMode(1)}
+              className="p-1 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+              title="Next Visualizer (Right Arrow)"
             >
-              <Waves size={13} />
-              <span className="hidden sm:inline">Harmonic</span>
-            </button>
-
-            <button
-              onClick={() => setVisualMode('radial')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                visualMode === 'radial'
-                  ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.25)]'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              <Radio size={13} />
-              <span className="hidden sm:inline">Audio Halo</span>
-            </button>
-
-            <button
-              onClick={() => setVisualMode('particles')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                visualMode === 'particles'
-                  ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.25)]'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              <Sparkles size={13} />
-              <span className="hidden sm:inline">Cosmic</span>
-            </button>
-
-            <button
-              onClick={() => setVisualMode('vu-meter')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                visualMode === 'vu-meter'
-                  ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.25)]'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              <Gauge size={13} />
-              <span className="hidden sm:inline">VU Meter</span>
-            </button>
-
-            <button
-              onClick={() => setVisualMode('video')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                visualMode === 'video'
-                  ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.25)]'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              <Video size={13} />
-              <span className="hidden sm:inline">Video</span>
+              <ChevronRight size={14} />
             </button>
           </div>
 
@@ -441,7 +429,20 @@ export default function VisualizerModal() {
             </div>
           )}
 
-          {/* Mode 7: ReactPlayer Video */}
+          {/* Mode 7: Cyber LED Matrix */}
+          {visualMode === 'matrix' && (
+            <div className="h-full flex flex-col items-center justify-center px-4 w-full">
+              <div className="w-full h-64 sm:h-76 flex items-center justify-center">
+                <AudioCanvasVisualizer mode="matrix" barCount={32} height={260} />
+              </div>
+              <div className="text-center mt-3">
+                <h3 className="text-xl font-bold text-white">{currentTrack.title}</h3>
+                <p className="text-sm text-white/60">{currentTrack.artist_name || currentTrack.artist}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Mode 8: ReactPlayer Video */}
           {visualMode === 'video' && (
             <div className="h-full flex flex-col items-center justify-center px-4 max-w-2xl mx-auto w-full">
               <UniversalReactPlayer showVideo={true} />
