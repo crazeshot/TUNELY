@@ -102,10 +102,10 @@ def register_view(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    username = serializer.validated_data['username']
-    email = serializer.validated_data['email']
+    username = serializer.validated_data['username'].strip()
+    email = serializer.validated_data['email'].strip()
     password = serializer.validated_data['password']
-    display_name = serializer.validated_data.get('display_name') or username
+    display_name = (serializer.validated_data.get('display_name') or username).strip()
 
     if User.objects.filter(username__iexact=username).exists():
         return Response({'error': 'Username already taken'}, status=status.HTTP_400_BAD_REQUEST)
@@ -134,33 +134,42 @@ def login_view(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    username = serializer.validated_data['username']
-    password = serializer.validated_data['password']
+    raw_ident = serializer.validated_data['username'].strip()
+    raw_password = serializer.validated_data['password']
 
-    # Support login with either username or email
-    if '@' in username:
-        user_obj = User.objects.filter(email__iexact=username).first()
-        if user_obj:
-            username = user_obj.username
+    # Support login with case-insensitive username, email, or display_name
+    user_obj = User.objects.filter(
+        Q(username__iexact=raw_ident) |
+        Q(email__iexact=raw_ident) |
+        Q(profile__display_name__iexact=raw_ident)
+    ).first()
 
-    user = authenticate(username=username, password=password)
+    auth_username = user_obj.username if user_obj else raw_ident
+    user = authenticate(username=auth_username, password=raw_password)
+
+    # Fallback to stripped password in case trailing space was copied
+    if not user and raw_password != raw_password.strip():
+        user = authenticate(username=auth_username, password=raw_password.strip())
+
     if not user:
-        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'error': 'Invalid credentials. Please check your username/email and password.'}, status=status.HTTP_401_UNAUTHORIZED)
 
+    profile, _ = UserProfile.objects.get_or_create(user=user)
     token, _ = Token.objects.get_or_create(user=user)
     user_data = UserSerializer(user).data
 
     return Response({
         'token': token.key,
         'user': user_data,
-        'message': f'Welcome back, {user.profile.display_name or user.username}!'
+        'message': f'Welcome back, {profile.display_name or user.username}!'
     }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def logout_view(request):
-    Token.objects.filter(user=request.user).delete()
+    if request.user and request.user.is_authenticated:
+        Token.objects.filter(user=request.user).delete()
     return Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
 
 
@@ -180,15 +189,15 @@ def me_view(request):
             'liked_count': FavoriteTrack.objects.count(),
         })
 
+    profile, _ = UserProfile.objects.get_or_create(user=user)
     if request.method == 'PUT':
-        profile, _ = UserProfile.objects.get_or_create(user=user)
         display_name = request.data.get('display_name')
         avatar_url = request.data.get('avatar_url')
         bio = request.data.get('bio')
         preferred_theme = request.data.get('preferred_theme')
 
-        if display_name is not None: profile.display_name = display_name
-        if avatar_url is not None: profile.avatar_url = avatar_url
+        if display_name is not None: profile.display_name = display_name.strip()
+        if avatar_url is not None: profile.avatar_url = avatar_url.strip()
         if bio is not None: profile.bio = bio
         if preferred_theme is not None: profile.preferred_theme = preferred_theme
         profile.save()
@@ -510,7 +519,12 @@ def ytm_genre_mood_view(request):
     })
 
 
-CHUNK_SIZE = 1024 * 1024  # 1MB bounded byte-range chunk window for RFC 7233 compliance
+_stream_session = requests.Session()
+_stream_adapter = requests.adapters.HTTPAdapter(pool_connections=30, pool_maxsize=100, max_retries=2)
+_stream_session.mount('https://', _stream_adapter)
+_stream_session.mount('http://', _stream_adapter)
+
+CHUNK_SIZE = 512 * 1024  # 512KB bounded chunk window: rapid TTFB & ~32s buffer per request
 
 
 @api_view(['GET', 'HEAD', 'OPTIONS'])
@@ -532,7 +546,7 @@ def ytm_stream_view(request, video_id):
 
     if request.method == 'HEAD':
         try:
-            head_resp = requests.head(stream_url, timeout=8)
+            head_resp = _stream_session.head(stream_url, timeout=6)
             res = HttpResponse(status=200, content_type=head_resp.headers.get('Content-Type', 'audio/mp4'))
             res['Accept-Ranges'] = 'bytes'
             if 'Content-Length' in head_resp.headers:
@@ -570,7 +584,7 @@ def ytm_stream_view(request, video_id):
         else:
             req_headers['Range'] = f'bytes=0-{CHUNK_SIZE - 1}'
 
-        upstream = requests.get(stream_url, headers=req_headers, timeout=12)
+        upstream = _stream_session.get(stream_url, headers=req_headers, timeout=12)
 
         status_code = upstream.status_code if upstream.status_code in [200, 206] else 200
         content_type = upstream.headers.get('Content-Type', 'audio/mp4')
@@ -579,6 +593,7 @@ def ytm_stream_view(request, video_id):
         response['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
         response['Access-Control-Allow-Headers'] = '*'
         response['Accept-Ranges'] = 'bytes'
+        response['Cache-Control'] = 'public, max-age=3600, immutable'
         for h in ['Content-Range', 'Content-Length']:
             if h in upstream.headers:
                 response[h] = upstream.headers[h]

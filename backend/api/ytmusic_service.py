@@ -239,7 +239,7 @@ class YTMusicService:
 
     def get_trending_songs(self):
         """
-        Fetch top trending songs from YouTube Music charts with reliable fallback.
+        Fetch top trending songs from YouTube Music charts with disk cache and reliable fallback.
         """
         now = time.time()
         if self._trending_cache:
@@ -247,6 +247,20 @@ class YTMusicService:
             if now - cached_time < 7200 and cached_tracks:  # 2 hours and non-empty
                 return cached_tracks
 
+        # 1. Check disk cache for instant startup (0ms)
+        cache_file = BASE_DIR / 'trending_cache.json'
+        if not self._trending_cache and cache_file.exists():
+            try:
+                import json
+                with open(cache_file, 'r', encoding='utf-8') as f:
+                    disk_data = json.load(f)
+                    if disk_data and isinstance(disk_data, list) and len(disk_data) > 0:
+                        self._trending_cache = (now, disk_data)
+                        return disk_data
+            except Exception as e:
+                print(f"[YTMusic] Disk cache read note: {e}")
+
+        # 2. Query YouTube Music Charts
         try:
             charts = self.ytm.get_charts(country='US')
             songs_data = charts.get('songs')
@@ -290,24 +304,63 @@ class YTMusicService:
                 })
             if tracks:
                 self._trending_cache = (now, tracks)
+                self._save_trending_to_disk(tracks)
                 return tracks
         except Exception as e:
             print(f"[YTMusic] Charts error: {e}")
 
-        # Fallback to searching top global trending songs
+        # 3. Fallback to searching top global trending songs
         try:
             tracks = self.search_tracks("top global trending songs hits", limit=24)
             if tracks:
                 self._trending_cache = (now, tracks)
+                self._save_trending_to_disk(tracks)
                 return tracks
         except Exception as e:
             print(f"[YTMusic] Trending fallback error: {e}")
 
+        # 4. Instant local DB fallback if network is offline or slow
+        try:
+            from api.models import Track
+            db_tracks = Track.objects.select_related('artist', 'album').all()[:24]
+            fallback_tracks = []
+            for t in db_tracks:
+                vid = t.audio_url.rstrip('/').split('/')[-1] if '/stream/' in t.audio_url else f"db-{t.id}"
+                fallback_tracks.append({
+                    'id': f"ytm-{vid}",
+                    'videoId': vid,
+                    'title': t.title,
+                    'artist_name': t.artist.name if t.artist else 'Tunely Artist',
+                    'artist': t.artist.name if t.artist else 'Tunely Artist',
+                    'cover_url': t.cover_url or (t.album.cover_url if t.album else ''),
+                    'cover': t.cover_url or (t.album.cover_url if t.album else ''),
+                    'duration': t.duration or '3:30',
+                    'duration_seconds': t.duration_seconds or 210,
+                    'genre': t.genre or 'Top Charts',
+                    'audio_url': t.audio_url or f"/api/ytm/stream/{vid}/",
+                    'youtube_url': f"https://www.youtube.com/watch?v={vid}",
+                    'is_ytm': True,
+                })
+            if fallback_tracks:
+                self._trending_cache = (now, fallback_tracks)
+                return fallback_tracks
+        except Exception:
+            pass
+
         return []
+
+    def _save_trending_to_disk(self, tracks):
+        try:
+            import json
+            cache_file = BASE_DIR / 'trending_cache.json'
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(tracks, f, ensure_ascii=False)
+        except Exception as e:
+            print(f"[YTMusic] Disk cache write note: {e}")
 
     def get_stream_url(self, video_id):
         """
-        Extract direct audio stream URL with 4-hour in-memory caching.
+        Extract direct audio stream URL with 4-hour in-memory caching and optimized yt-dlp.
         """
         now = time.time()
         if video_id in self._stream_cache:
@@ -323,6 +376,10 @@ class YTMusicService:
             'skip_download': True,
             'extract_flat': False,
             'nocheckcertificate': True,
+            'youtube_include_dash_manifest': False,
+            'youtube_include_hls_manifest': False,
+            'extractor_retries': 0,
+            'socket_timeout': 6,
         }
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:

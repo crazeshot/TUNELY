@@ -10,6 +10,12 @@ export default function AuthModal() {
     if (authTab) setTab(authTab);
   }, [authTab, isAuthModalOpen]);
 
+  useEffect(() => {
+    if (isAuthModalOpen) {
+      setAuthError(null);
+    }
+  }, [isAuthModalOpen]);
+
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,11 +29,21 @@ export default function AuthModal() {
     setLoading(true);
     setAuthError(null);
     try {
+      const cleanUsername = username.trim();
       if (tab === 'login') {
-        await login(username, password);
+        await login(cleanUsername, password);
       } else {
-        await register({ username, email, password, display_name: displayName });
+        await register({
+          username: cleanUsername,
+          email: email.trim(),
+          password,
+          display_name: (displayName || cleanUsername).trim(),
+        });
       }
+      setUsername('');
+      setEmail('');
+      setPassword('');
+      setDisplayName('');
     } catch {
       // Error handled by AuthContext
     } finally {
@@ -36,11 +52,12 @@ export default function AuthModal() {
   };
 
   const handleGuestDemo = async () => {
-    setUsername('alex_m');
-    setPassword('tunely2026');
     setLoading(true);
+    setAuthError(null);
     try {
       await login('alex_m', 'tunely2026');
+      setUsername('');
+      setPassword('');
     } catch {
       // Ignore
     } finally {
@@ -142,7 +159,7 @@ export default function AuthModal() {
 
           <div>
             <label className="block text-[11px] font-medium text-white/60 mb-1">
-              {tab === 'login' ? 'Username or Email' : 'Username'}
+              {tab === 'login' ? 'Username, Email, or Display Name' : 'Username'}
             </label>
             <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-white/5 border border-white/10 focus-within:border-white focus-within:ring-1 focus-within:ring-white/20 transition-all">
               <User size={14} className="text-white/40" />
@@ -151,7 +168,7 @@ export default function AuthModal() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
+                placeholder={tab === 'login' ? 'Enter username, email, or display name' : 'Choose a unique username'}
                 className="w-full bg-transparent text-xs text-white placeholder-white/30 outline-none"
               />
             </div>

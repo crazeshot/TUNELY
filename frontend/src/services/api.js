@@ -7,8 +7,8 @@ import { allTracks, initialPlaylists } from '../data/musicData';
 
 const BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://127.0.0.1:8000/api';
 
-// Safe fetch wrapper that automatically retries connection errors during desktop app startup
-async function robustFetch(url, options = {}, retries = 6) {
+// Fast and resilient fetch wrapper for desktop app and local backend
+async function robustFetch(url, options = {}, retries = 2) {
   for (let i = 0; i <= retries; i++) {
     try {
       return await window.fetch(url, options);
@@ -16,7 +16,7 @@ async function robustFetch(url, options = {}, retries = 6) {
       const msg = (err.message || '').toLowerCase();
       const isNetworkErr = err.name === 'TypeError' || msg.includes('fetch') || msg.includes('network') || msg.includes('connection');
       if (i < retries && isNetworkErr) {
-        await new Promise(r => setTimeout(r, 500 * (i + 1)));
+        await new Promise(r => setTimeout(r, 150 * (i + 1)));
         continue;
       }
       throw err;
@@ -58,10 +58,25 @@ export const api = {
       const res = await fetch(`${BASE_URL}/auth/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password, display_name }),
+        body: JSON.stringify({
+          username: (username || '').trim(),
+          email: (email || '').trim(),
+          password,
+          display_name: (display_name || '').trim(),
+        }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Registration failed');
+      if (!res.ok) {
+        let msg = data.error || data.detail;
+        if (!msg && typeof data === 'object') {
+          const firstKey = Object.keys(data)[0];
+          if (firstKey) {
+            const val = data[firstKey];
+            msg = Array.isArray(val) ? `${firstKey}: ${val[0]}` : String(val);
+          }
+        }
+        throw new Error(msg || 'Registration failed');
+      }
       if (data.token) {
         localStorage.setItem('tunely_auth_token', data.token);
       }
@@ -77,10 +92,23 @@ export const api = {
       const res = await fetch(`${BASE_URL}/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          username: (username || '').trim(),
+          password,
+        }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Invalid credentials');
+      if (!res.ok) {
+        let msg = data.error || data.detail;
+        if (!msg && typeof data === 'object') {
+          const firstKey = Object.keys(data)[0];
+          if (firstKey) {
+            const val = data[firstKey];
+            msg = Array.isArray(val) ? `${firstKey}: ${val[0]}` : String(val);
+          }
+        }
+        throw new Error(msg || 'Invalid username or password');
+      }
       if (data.token) {
         localStorage.setItem('tunely_auth_token', data.token);
       }
@@ -310,11 +338,25 @@ export const api = {
       return clientSearchCache.get(cacheKey);
     }
     try {
+      const stored = sessionStorage.getItem(`tunely_s_${cacheKey}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          clientSearchCache.set(cacheKey, parsed);
+          return parsed;
+        }
+      }
+    } catch {}
+
+    try {
       const res = await fetch(`${BASE_URL}/ytm/search/?q=${encodeURIComponent(query)}&limit=${limit}`);
       if (!res.ok) throw new Error('YTM search failed');
       const data = await res.json();
       const results = (data.tracks || []).map(sanitizeTrack);
       clientSearchCache.set(cacheKey, results);
+      try {
+        sessionStorage.setItem(`tunely_s_${cacheKey}`, JSON.stringify(results));
+      } catch {}
       if (clientSearchCache.size > 200) {
         const firstKey = clientSearchCache.keys().next().value;
         clientSearchCache.delete(firstKey);
@@ -328,21 +370,67 @@ export const api = {
 
   async getYTMTrending() {
     const now = Date.now();
-    if (trendingCache && now - trendingCacheTime < 300000) { // 5 min cache
+    if (trendingCache && now - trendingCacheTime < 300000) { // 5 min memory cache
       return trendingCache;
     }
+
+    // Instant 0ms render from localStorage cache
+    if (!trendingCache) {
+      try {
+        const stored = localStorage.getItem('tunely_cached_trending');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            trendingCache = parsed;
+            trendingCacheTime = now;
+            // Silent background refresh
+            this._refreshYTMTrendingInBackground();
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+
+    return await this._fetchAndCacheTrending();
+  },
+
+  async _fetchAndCacheTrending() {
     try {
       const res = await fetch(`${BASE_URL}/ytm/trending/`);
       if (!res.ok) throw new Error('YTM trending failed');
       const data = await res.json();
       const results = (data.tracks || []).map(sanitizeTrack);
-      trendingCache = results;
-      trendingCacheTime = now;
+      if (results.length > 0) {
+        trendingCache = results;
+        trendingCacheTime = Date.now();
+        try {
+          localStorage.setItem('tunely_cached_trending', JSON.stringify(results));
+        } catch {}
+      }
       return results;
     } catch (err) {
       console.warn('[API] YTM trending note:', err.message);
-      return [];
+      return trendingCache || [];
     }
+  },
+
+  _refreshYTMTrendingInBackground() {
+    setTimeout(async () => {
+      try {
+        const res = await window.fetch(`${BASE_URL}/ytm/trending/`);
+        if (res.ok) {
+          const data = await res.json();
+          const results = (data.tracks || []).map(sanitizeTrack);
+          if (results.length > 0) {
+            trendingCache = results;
+            trendingCacheTime = Date.now();
+            try {
+              localStorage.setItem('tunely_cached_trending', JSON.stringify(results));
+            } catch {}
+          }
+        }
+      } catch {}
+    }, 200);
   },
 
   async getYTMLyrics(videoId) {
@@ -382,6 +470,17 @@ export const api = {
       return clientSearchCache.get(cacheKey);
     }
     try {
+      const stored = sessionStorage.getItem(`tunely_s_${cacheKey}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          clientSearchCache.set(cacheKey, parsed);
+          return parsed;
+        }
+      }
+    } catch {}
+
+    try {
       const params = new URLSearchParams();
       if (cleanGenre && cleanGenre !== 'All') params.append('genre', cleanGenre);
       if (cleanMood && cleanMood !== 'All') params.append('mood', cleanMood);
@@ -392,6 +491,9 @@ export const api = {
       const data = await res.json();
       const results = (data.tracks || []).map(sanitizeTrack);
       clientSearchCache.set(cacheKey, results);
+      try {
+        sessionStorage.setItem(`tunely_s_${cacheKey}`, JSON.stringify(results));
+      } catch {}
       return results;
     } catch (err) {
       console.warn('[API] YTM genre/mood note:', err.message);

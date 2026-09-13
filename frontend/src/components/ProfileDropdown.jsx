@@ -204,8 +204,18 @@ export default function ProfileDropdown() {
 
               <div className="h-px bg-white/10 my-1 mx-2" />
 
-              {/* Sign Out */}
-              <div className="p-1">
+              {/* Switch Account & Sign Out */}
+              <div className="p-1 space-y-0.5">
+                <button
+                  onClick={() => {
+                    openLogin();
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <UserPlus size={14} className="text-white/60" />
+                  <span>Switch Account</span>
+                </button>
                 <button
                   onClick={() => {
                     logout();
