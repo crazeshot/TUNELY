@@ -129,9 +129,18 @@ export function PlayerProvider({ children }) {
     }
   });
 
-  // Equalizer
+  // Equalizer & Visualizer
   const [eqPreset, setEqPresetState] = useState('Flat');
   const [eqBands, setEqBands] = useState(EQ_PRESETS.Flat);
+  const [isEqBypassed, setIsEqBypassed] = useState(false);
+  const [preampGain, setPreampGainState] = useState(0);
+  const [visualizerTheme, setVisualizerThemeState] = useState(() => {
+    try {
+      return localStorage.getItem('tunely_visualizer_theme') || 'silver';
+    } catch {
+      return 'silver';
+    }
+  });
 
   // Offline downloads
   const [downloadedTrackIds, setDownloadedTrackIds] = useState(new Set());
@@ -845,6 +854,27 @@ export function PlayerProvider({ children }) {
     setEqPresetState('Custom');
   }, []);
 
+  const toggleEqBypass = useCallback(() => {
+    setIsEqBypassed(prev => {
+      const next = !prev;
+      audioEngine.setEqualizerBypass(next, eqBands);
+      showToast(next ? '⚡ EQ Bypassed (Flat)' : '🔊 EQ Re-engaged');
+      return next;
+    });
+  }, [eqBands, showToast]);
+
+  const setPreampGain = useCallback((db) => {
+    setPreampGainState(db);
+    audioEngine.setPreampGain(db);
+  }, []);
+
+  const setVisualizerTheme = useCallback((theme) => {
+    setVisualizerThemeState(theme);
+    try {
+      localStorage.setItem('tunely_visualizer_theme', theme);
+    } catch {}
+  }, []);
+
   const toggleSpatialAudio = useCallback(() => {
     setIsSpatialAudio(prev => {
       const next = !prev;
@@ -1291,6 +1321,14 @@ export function PlayerProvider({ children }) {
     toggleSpatialAudio,
     setEqualizerPreset,
     setEqualizerBand,
+    isEqBypassed,
+    toggleEqBypass,
+    preampGain,
+    setPreampGain,
+    visualizerTheme,
+    setVisualizerTheme,
+    getFrequencyData: () => audioEngine.getFrequencyData(),
+    getEqualizerResponseCurve: (n) => audioEngine.getEqualizerResponseCurve(n),
     setSleepTimer,
     startTrackRadio,
     downloadTrack,

@@ -14,9 +14,11 @@ import {
   Moon,
   Sparkles,
   Headphones,
+  Activity,
 } from "lucide-react";
 import { usePlayer } from "../context/usePlayer";
 import { getCoverUrl, handleCoverError } from "../utils/coverUrl";
+import AudioCanvasVisualizer from "./AudioCanvasVisualizer";
 
 function formatTime(secs) {
   const s = Math.floor(secs || 0);
@@ -56,6 +58,8 @@ export default function PlayerBar({ collapsed = false }) {
     setActiveArtistModal,
     sleepTimerSeconds,
     themeColors,
+    eqPreset,
+    isEqBypassed,
   } = usePlayer();
 
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
@@ -173,7 +177,7 @@ export default function PlayerBar({ collapsed = false }) {
           </div>
         </div>
 
-        {/* ── 5. Quick Utility Row: Heart Like + Studio EQ Toggle ── */}
+        {/* ── 5. Quick Utility Row: Heart Like + Studio EQ Toggle + Visualizer ── */}
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => toggleLike(currentTrack)}
@@ -186,10 +190,24 @@ export default function PlayerBar({ collapsed = false }) {
           </button>
           <button
             onClick={() => setIsEqualizerOpen(true)}
-            className="w-7 h-7 rounded-xl bg-white/5 hover:bg-white/15 text-white/40 hover:text-white flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-            title="Open Equalizer & Soundstage"
+            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 relative ${
+              eqPreset !== 'Flat' && !isEqBypassed
+                ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.4)]'
+                : 'bg-white/5 hover:bg-white/15 text-white/40 hover:text-white'
+            }`}
+            title={`Equalizer (${eqPreset}${isEqBypassed ? ' - Bypassed' : ''})`}
           >
             <Sliders size={12} />
+            {eqPreset !== 'Flat' && !isEqBypassed && (
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-neutral-900" />
+            )}
+          </button>
+          <button
+            onClick={() => setIsVisualizerOpen(true)}
+            className="w-7 h-7 rounded-xl bg-white/5 hover:bg-white/15 text-white/40 hover:text-white flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+            title="Studio Visualizer"
+          >
+            <Activity size={12} className={isPlaying ? "text-emerald-400 animate-pulse" : ""} />
           </button>
         </div>
       </div>
@@ -324,6 +342,15 @@ export default function PlayerBar({ collapsed = false }) {
         </button>
       </div>
 
+      {/* Live Mini Spectrum Visualizer Strip (Clickable to open Visualizer Studio) */}
+      <div
+        onClick={() => setIsVisualizerOpen(true)}
+        className="h-4 px-1 cursor-pointer group flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity"
+        title="Click to launch Visualizer Studio"
+      >
+        <AudioCanvasVisualizer mode="bars" barCount={28} height={16} showPeaks={false} showReflection={false} />
+      </div>
+
       {/* High-Precision Progress Bar */}
       <div className="space-y-1">
         <div className="relative group cursor-pointer py-1">
@@ -380,10 +407,26 @@ export default function PlayerBar({ collapsed = false }) {
         {/* EQ */}
         <button
           onClick={() => setIsEqualizerOpen(true)}
-          className="p-1.5 rounded-lg hover:text-white transition-colors"
-          title="10-Band Graphic Equalizer"
+          className={`p-1.5 rounded-lg transition-colors relative ${
+            eqPreset !== 'Flat' && !isEqBypassed
+              ? 'text-white font-bold bg-white/10'
+              : 'hover:text-white'
+          }`}
+          title={`10-Band Graphic Equalizer (${eqPreset})`}
         >
           <Sliders size={13} />
+          {eqPreset !== 'Flat' && !isEqBypassed && (
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+          )}
+        </button>
+
+        {/* Visualizer Studio */}
+        <button
+          onClick={() => setIsVisualizerOpen(true)}
+          className="p-1.5 rounded-lg hover:text-white transition-colors"
+          title="Studio Visualizer & Lyrics"
+        >
+          <Activity size={13} className={isPlaying ? "text-emerald-400 animate-pulse" : ""} />
         </button>
 
         {/* Sleep Timer */}
