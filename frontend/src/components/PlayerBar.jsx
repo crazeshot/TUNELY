@@ -343,37 +343,20 @@ export default function PlayerBar({ collapsed = false }) {
         </button>
       </div>
 
-      {/* ── UNIFIED DEDICATED VISUALIZER BUTTON & LIVE SPECTRUM ── */}
-      <button
-        type="button"
+      {/* Live Precision Visualizer Strip (Click to Open Visualizer Studio) */}
+      <div
         onClick={() => setIsVisualizerOpen(true)}
-        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/25 transition-all duration-200 group cursor-pointer shadow-sm active:scale-[0.99]"
-        title="Open Studio Visualizer & Toggle all visualizers"
+        className="h-3.5 w-full px-1 cursor-pointer group flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity"
+        title="Click to open Studio Visualizer & Lyrics"
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <Activity
-            size={13}
-            className={`shrink-0 transition-colors ${isPlaying ? 'text-emerald-400 animate-pulse' : 'text-white/40 group-hover:text-white'}`}
-          />
-          <span className="text-[11px] font-bold text-white/90 group-hover:text-white tracking-wide">
-            Visualizer
-          </span>
-          <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-white/10 text-white/60 group-hover:text-white/90 group-hover:bg-white/15 transition-all truncate">
-            {visualMode === 'vu-meter' ? 'VU Meter' : visualMode}
-          </span>
-        </div>
-
-        {/* Live Smooth Audio Spectrum Preview */}
-        <div className="w-24 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity shrink-0 flex items-center justify-end">
-          <AudioCanvasVisualizer
-            mode={visualMode === 'wave' ? 'wave' : 'bars'}
-            barCount={20}
-            height={14}
-            showPeaks={false}
-            showReflection={false}
-          />
-        </div>
-      </button>
+        <AudioCanvasVisualizer
+          mode={visualMode === 'wave' ? 'wave' : 'bars'}
+          barCount={32}
+          height={14}
+          showPeaks={false}
+          showReflection={false}
+        />
+      </div>
 
       {/* High-Precision Progress Bar */}
       <div className="space-y-1">
@@ -442,6 +425,15 @@ export default function PlayerBar({ collapsed = false }) {
           {eqPreset !== 'Flat' && !isEqBypassed && (
             <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
           )}
+        </button>
+
+        {/* Studio Visualizer */}
+        <button
+          onClick={() => setIsVisualizerOpen(true)}
+          className="p-1.5 rounded-lg hover:text-white transition-colors"
+          title="Studio Visualizer & Lyrics"
+        >
+          <Activity size={13} className={isPlaying ? "text-emerald-400 animate-pulse" : ""} />
         </button>
 
         {/* Sleep Timer */}
