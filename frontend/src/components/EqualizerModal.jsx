@@ -103,30 +103,29 @@ export default function EqualizerModal() {
       const freq = getFrequencyData ? getFrequencyData() : { spectrum: new Uint8Array(64) };
       const spectrum = freq.spectrum || new Uint8Array(64);
       if (spectrum.length > 0) {
-        const barCount = 40;
+        const barCount = 36;
         const barW = width / barCount;
-        const nyquist = (freq.sampleRate || 44100) / 2;
+        const minBin = 1;
+        const maxBin = Math.min(spectrum.length - 1, 85);
         for (let b = 0; b < barCount; b++) {
-          const fLow = 24 * Math.pow(16500 / 24, b / barCount);
-          const fHigh = 24 * Math.pow(16500 / 24, (b + 1) / barCount);
-          const b0 = Math.max(0, Math.floor((fLow / nyquist) * spectrum.length));
-          const b1 = Math.min(spectrum.length - 1, Math.ceil((fHigh / nyquist) * spectrum.length));
-          let peak = 0, sum = 0, count = 0;
+          const norm = b / barCount;
+          const p0 = Math.pow(norm, 1.6);
+          const p1 = Math.pow((b + 1) / barCount, 1.6);
+          const b0 = Math.max(minBin, Math.floor(minBin + p0 * (maxBin - minBin)));
+          const b1 = Math.min(maxBin, Math.max(b0, Math.floor(minBin + p1 * (maxBin - minBin))));
+          let sum = 0, count = 0;
           for (let k = b0; k <= b1; k++) {
-            const v = spectrum[k] || 0;
-            sum += v;
-            if (v > peak) peak = v;
+            sum += spectrum[k] || 0;
             count++;
           }
-          const rawVal = count > 0 ? (sum / count) * 0.4 + peak * 0.6 : 0;
-          const tilt = 0.85 + Math.pow(b / barCount, 0.5) * 1.5;
-          const energy = Math.min(255, rawVal * tilt);
-          const h = (energy / 255) * height * 0.75;
+          const rawVal = count > 0 ? sum / count : 0;
+          const energy = Math.min(255, rawVal * (1.0 + norm * 0.3));
+          const h = (energy / 255) * height * 0.65;
           const x = b * barW;
           const y = height - h;
 
           const specGrad = ctx.createLinearGradient(0, y, 0, height);
-          specGrad.addColorStop(0, 'rgba(255, 255, 255, 0.20)');
+          specGrad.addColorStop(0, 'rgba(255, 255, 255, 0.16)');
           specGrad.addColorStop(1, 'rgba(255, 255, 255, 0.01)');
           ctx.fillStyle = specGrad;
           ctx.fillRect(x + 1, y, barW - 2, h);

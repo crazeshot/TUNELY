@@ -44,53 +44,39 @@ export const VISUALIZER_THEMES = {
   },
 };
 
-// ── PSYCHOACOUSTIC LOGARITHMIC FREQUENCY SAMPLING ─────────────────────────────
-// Maps bar indices across the human hearing range (24Hz to 16.5kHz) with
-// perceptual tilt compensation, eliminating the dead-tail flat line on treble.
-function getLogFrequency(index, totalBars, minFreq = 24, maxFreq = 16500) {
-  return minFreq * Math.pow(maxFreq / minFreq, index / Math.max(1, totalBars - 1));
-}
+// ── CALIBRATED MUSICAL FREQUENCY DISTRIBUTION ─────────────────────────────────
+// Maps bar indices across the active musical spectrum (bins 1 to ~85) with
+// power-law distribution. Guarantees every bar is active while never clipping.
+function getBarEnergy(spectrum, index, totalBars) {
+  if (!spectrum || spectrum.length === 0) return 0;
+  const minBin = 1;
+  const maxBin = Math.min(spectrum.length - 1, 85); // up to ~15 kHz
+  const norm = index / Math.max(1, totalBars - 1);
 
-function sampleLogEnergy(spectrum, barIndex, totalBars, sampleRate = 44100) {
-  const binCount = spectrum.length;
-  if (!binCount) return 0;
-  const nyquist = sampleRate / 2;
-  const fLow = getLogFrequency(barIndex, totalBars);
-  const fHigh = getLogFrequency(barIndex + 1, totalBars);
+  // Power scale (1.6) spreads bass, mids, and treble evenly across visual bars
+  const p0 = Math.pow(norm, 1.6);
+  const p1 = Math.pow((index + 1) / totalBars, 1.6);
 
-  const binLow = (fLow / nyquist) * binCount;
-  const binHigh = (fHigh / nyquist) * binCount;
+  const b0 = Math.max(minBin, Math.floor(minBin + p0 * (maxBin - minBin)));
+  const b1 = Math.min(maxBin, Math.max(b0, Math.floor(minBin + p1 * (maxBin - minBin))));
 
-  let energy = 0;
-  if (binHigh - binLow < 1.0) {
-    // Low bass frequencies where 1 bin covers multiple bars: interpolate smoothly
-    const idx0 = Math.max(0, Math.min(binCount - 1, Math.floor(binLow)));
-    const idx1 = Math.max(0, Math.min(binCount - 1, idx0 + 1));
-    const frac = binLow - idx0;
-    energy = (spectrum[idx0] || 0) * (1 - frac) + (spectrum[idx1] || 0) * frac;
-  } else {
-    // Mid to treble frequencies where each bar spans multiple bins:
-    // Blend band average (for warmth & body) with band peak (for crisp snare & hi-hat transients)
-    let sum = 0;
-    let count = 0;
-    let peak = 0;
-    const startBin = Math.max(0, Math.floor(binLow));
-    const endBin = Math.min(binCount - 1, Math.ceil(binHigh));
-    for (let b = startBin; b <= endBin; b++) {
-      const v = spectrum[b] || 0;
-      sum += v;
-      if (v > peak) peak = v;
-      count++;
-    }
-    energy = count > 0 ? (sum / count) * 0.4 + peak * 0.6 : 0;
+  let sum = 0;
+  let count = 0;
+  let max = 0;
+  for (let b = b0; b <= b1; b++) {
+    const val = spectrum[b] || 0;
+    sum += val;
+    if (val > max) max = val;
+    count++;
   }
 
-  // Perceptual Equal-Loudness Treble Compensation:
-  // Music naturally exhibits pink-noise slope (~ -3dB to -4.5dB/octave).
-  // Applying an octave-scaled compensation ensures upper frequencies dance with the same energy as bass.
-  const normIndex = barIndex / Math.max(1, totalBars - 1);
-  const tilt = 0.85 + Math.pow(normIndex, 0.5) * 1.6;
-  return Math.min(255, energy * tilt);
+  // Blend average (70%) and peak (30%) for smooth musical movement
+  const avg = count > 0 ? sum / count : 0;
+  const blended = avg * 0.7 + max * 0.3;
+
+  // Gentle acoustic treble slope (from 1.0 at bass to 1.35 at top treble)
+  const trebleTilt = 1.0 + norm * 0.35;
+  return Math.min(255, blended * trebleTilt);
 }
 
 export default function AudioCanvasVisualizer({
@@ -114,7 +100,7 @@ export default function AudioCanvasVisualizer({
   const peakHoldRef = useRef(new Int32Array(barCount));
   const peakSpeedRef = useRef(new Float32Array(barCount));
 
-  // VU meter physics state (needle positions and velocities)
+  // VU meter physics state
   const vuStateRef = useRef({
     leftPos: 0,
     leftVel: 0,
@@ -122,7 +108,7 @@ export default function AudioCanvasVisualizer({
     rightVel: 0,
   });
 
-  // Particles state
+  // Particles & animations state
   const particlesRef = useRef([]);
   const rotationRef = useRef(0);
   const waveTimeRef = useRef(0);
@@ -143,16 +129,15 @@ export default function AudioCanvasVisualizer({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Initialize particles for 'particles' mode
+    // Initialize particles
     if (particlesRef.current.length === 0) {
-      particlesRef.current = Array.from({ length: 65 }, () => ({
+      particlesRef.current = Array.from({ length: 60 }, () => ({
         x: Math.random(),
         y: Math.random(),
-        vx: (Math.random() - 0.5) * 0.0025,
-        vy: (Math.random() - 0.5) * 0.0025,
-        size: Math.random() * 2.5 + 1.2,
-        baseSize: Math.random() * 2 + 1,
-        alpha: Math.random() * 0.7 + 0.3,
+        vx: (Math.random() - 0.5) * 0.002,
+        vy: (Math.random() - 0.5) * 0.002,
+        size: Math.random() * 2 + 1,
+        baseSize: Math.random() * 1.8 + 0.8,
       }));
     }
 
@@ -166,12 +151,12 @@ export default function AudioCanvasVisualizer({
       const width = rect.width || canvas.parentElement?.clientWidth || 400;
       const h = height || rect.height || 120;
 
-      // Ensure crisp high-DPI scaling
-      const targetCanvasW = Math.round(width * dpr);
-      const targetCanvasH = Math.round(h * dpr);
-      if (canvas.width !== targetCanvasW || canvas.height !== targetCanvasH) {
-        canvas.width = targetCanvasW;
-        canvas.height = targetCanvasH;
+      // High-DPI canvas sizing
+      const targetW = Math.round(width * dpr);
+      const targetH = Math.round(h * dpr);
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
       }
 
       ctx.save();
@@ -179,23 +164,20 @@ export default function AudioCanvasVisualizer({
       ctx.clearRect(0, 0, width, h);
 
       const freq = getFrequencyData ? getFrequencyData() : {
-        spectrum: new Uint8Array(512),
-        timeDomain: new Uint8Array(512),
+        spectrum: new Uint8Array(128),
+        timeDomain: new Uint8Array(128),
         bass: 0,
         mid: 0,
         treble: 0,
         average: 0,
-        sampleRate: 44100,
       };
 
-      const spectrum = freq.spectrum || new Uint8Array(512);
-      const timeDomain = freq.timeDomain || new Uint8Array(512);
-      const sampleRate = freq.sampleRate || 44100;
-      const bassEnergy = (freq.bass || 0) / 255;
+      const spectrum = freq.spectrum || new Uint8Array(128);
+      const timeDomain = freq.timeDomain || new Uint8Array(128);
+      const bassEnergy = Math.min(1, (freq.bass || 0) / 255);
       const now = Date.now();
-      waveTimeRef.current += 0.03;
+      waveTimeRef.current += 0.025;
 
-      // Ensure state arrays match bar count
       if (smoothedBarsRef.current.length !== barCount) {
         smoothedBarsRef.current = new Float32Array(barCount);
         peaksRef.current = new Float32Array(barCount);
@@ -204,64 +186,62 @@ export default function AudioCanvasVisualizer({
       }
 
       // ─────────────────────────────────────────────────────────────
-      // MODE 1: STUDIO SPECTRUM (LOGARITHMIC BARS & GRAVITY PEAKS)
+      // MODE 1: STUDIO SPECTRUM (BARS & PEAK CAPS)
       // ─────────────────────────────────────────────────────────────
       if (mode === 'bars') {
         const totalBarSpace = width / barCount;
-        const barWidth = Math.max(2, totalBarSpace * 0.70);
-        const gap = totalBarSpace * 0.30;
-        const availableHeight = showReflection ? h * 0.70 : h * 0.90;
+        const barWidth = Math.max(2, totalBarSpace * 0.72);
+        const gap = totalBarSpace * 0.28;
+        const availableHeight = showReflection ? h * 0.68 : h * 0.90;
         const baseline = availableHeight;
 
         for (let i = 0; i < barCount; i++) {
-          let targetEnergy = 0;
+          let energy = 0;
           if (isPlaying) {
-            targetEnergy = sampleLogEnergy(spectrum, i, barCount, sampleRate);
+            energy = getBarEnergy(spectrum, i, barCount);
           } else {
-            // Idle organic breathing wave
-            targetEnergy = (Math.sin(now * 0.003 + i * 0.25) * 0.5 + 0.5) * 28 + 8;
+            energy = (Math.sin(now * 0.003 + i * 0.25) * 0.5 + 0.5) * 22 + 6;
           }
 
-          const targetHeight = Math.max(3, (targetEnergy / 255) * availableHeight);
+          // Calibrated target height: scales to 88% of available height max
+          const targetH = Math.max(3, (energy / 255) * availableHeight * 0.88);
 
-          // ── DUAL-RATE EXPONENTIAL TEMPORAL SMOOTHING ──
-          // Fast attack (0.42) for punchy transient responsiveness
-          // Silky decay (0.16) for liquid, stutter-free bar motion
-          const currentH = smoothedBarsRef.current[i];
-          if (targetHeight > currentH) {
-            smoothedBarsRef.current[i] = currentH + (targetHeight - currentH) * 0.42;
+          // Smooth attack (0.35) and smooth decay (0.16)
+          const curH = smoothedBarsRef.current[i];
+          if (targetH > curH) {
+            smoothedBarsRef.current[i] = curH + (targetH - curH) * 0.35;
           } else {
-            smoothedBarsRef.current[i] = currentH + (targetHeight - currentH) * 0.16;
+            smoothedBarsRef.current[i] = curH + (targetH - curH) * 0.16;
           }
 
-          const finalBarH = smoothedBarsRef.current[i];
+          const finalH = smoothedBarsRef.current[i];
 
-          // ── PHYSICAL PEAK HOLD & GRAVITY FALLOFF ──
-          if (finalBarH >= peaksRef.current[i]) {
-            peaksRef.current[i] = finalBarH;
-            peakHoldRef.current[i] = 12; // Hold 12 frames
+          // Gravity peak falloff
+          if (finalH >= peaksRef.current[i]) {
+            peaksRef.current[i] = finalH;
+            peakHoldRef.current[i] = 10;
             peakSpeedRef.current[i] = 0;
           } else {
             if (peakHoldRef.current[i] > 0) {
               peakHoldRef.current[i]--;
             } else {
-              peakSpeedRef.current[i] += 0.20; // Gravity acceleration
+              peakSpeedRef.current[i] += 0.22;
               peaksRef.current[i] = Math.max(3, peaksRef.current[i] - peakSpeedRef.current[i]);
             }
           }
 
           const x = i * (barWidth + gap) + gap / 2;
-          const y = baseline - finalBarH;
+          const y = baseline - finalH;
 
           // Main vertical gradient bar
           const grad = ctx.createLinearGradient(0, y, 0, baseline);
           grad.addColorStop(0, activeTheme.accent);
           grad.addColorStop(0.7, activeTheme.secondary);
-          grad.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+          grad.addColorStop(1, 'rgba(255, 255, 255, 0.08)');
 
           ctx.fillStyle = grad;
           ctx.beginPath();
-          ctx.roundRect(x, y, barWidth, finalBarH, [3, 3, 0, 0]);
+          ctx.roundRect(x, y, barWidth, finalH, [3, 3, 0, 0]);
           ctx.fill();
 
           // Floating Peak Cap
@@ -269,18 +249,18 @@ export default function AudioCanvasVisualizer({
             const peakY = Math.max(0, baseline - peaksRef.current[i] - 3);
             ctx.fillStyle = activeTheme.peak;
             ctx.shadowColor = activeTheme.glow;
-            ctx.shadowBlur = 5;
+            ctx.shadowBlur = 4;
             ctx.beginPath();
             ctx.roundRect(x, peakY, barWidth, 2, [1, 1, 1, 1]);
             ctx.fill();
             ctx.shadowBlur = 0;
           }
 
-          // Mirror glass reflection underneath baseline
+          // Mirror glass reflection
           if (showReflection) {
-            const reflectionHeight = finalBarH * 0.38;
+            const reflectionHeight = finalH * 0.35;
             const refGrad = ctx.createLinearGradient(0, baseline, 0, baseline + reflectionHeight);
-            refGrad.addColorStop(0, 'rgba(255, 255, 255, 0.24)');
+            refGrad.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
             refGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
             ctx.fillStyle = refGrad;
@@ -292,37 +272,44 @@ export default function AudioCanvasVisualizer({
       }
 
       // ─────────────────────────────────────────────────────────────
-      // MODE 2: HARMONIC OSCILLOSCOPE (BUTTERY TIME-DOMAIN WAVES)
+      // MODE 2: HARMONIC OSCILLOSCOPE (SMOOTH TIME-DOMAIN WAVE)
       // ─────────────────────────────────────────────────────────────
       else if (mode === 'wave') {
         const midY = h * 0.5;
-        const amplitude = h * 0.44;
-        const numPoints = 64;
+        const amplitude = h * 0.34;
+        const numPoints = 48;
         const slice = width / (numPoints - 1);
-        const tdLen = timeDomain.length || 512;
-        const tdStep = Math.max(1, Math.floor(tdLen / numPoints));
+        const tdLen = timeDomain.length || 128;
+        const step = Math.max(1, Math.floor(tdLen / numPoints));
+
+        // Sample and smooth points with a moving box filter
+        const points = [];
+        for (let i = 0; i < numPoints; i++) {
+          let sum = 0;
+          let count = 0;
+          const start = i * step;
+          for (let k = 0; k < step && start + k < tdLen; k++) {
+            sum += timeDomain[start + k];
+            count++;
+          }
+          const avgByte = count > 0 ? sum / count : 128;
+          const norm = isPlaying
+            ? (avgByte - 128) / 128
+            : Math.sin(waveTimeRef.current + i * 0.25) * 0.18;
+          points.push(midY + norm * amplitude);
+        }
 
         // Layer 1: Ambient soft luminous under-fill
         ctx.beginPath();
         ctx.moveTo(0, midY);
         for (let i = 0; i < numPoints; i++) {
-          const byteVal = isPlaying
-            ? timeDomain[i * tdStep] ?? 128
-            : 128 + Math.sin(waveTimeRef.current + i * 0.2) * 20;
-          const norm = (byteVal - 128) / 128;
-          const y = midY + norm * amplitude * 0.75;
           const x = i * slice;
-
+          const y = points[i];
           if (i === 0) ctx.moveTo(x, y);
           else {
             const prevX = (i - 1) * slice;
-            const prevByte = isPlaying
-              ? timeDomain[(i - 1) * tdStep] ?? 128
-              : 128 + Math.sin(waveTimeRef.current + (i - 1) * 0.2) * 20;
-            const prevNorm = (prevByte - 128) / 128;
-            const prevY = midY + prevNorm * amplitude * 0.75;
-            const cpX = (prevX + x) / 2;
-            ctx.quadraticCurveTo(cpX, prevY, x, y);
+            const prevY = points[i - 1];
+            ctx.quadraticCurveTo(prevX, prevY, (prevX + x) / 2, (prevY + y) / 2);
           }
         }
         ctx.lineTo(width, h);
@@ -337,95 +324,81 @@ export default function AudioCanvasVisualizer({
         // Layer 2: Main crisp neon oscilloscope wave
         ctx.beginPath();
         for (let i = 0; i < numPoints; i++) {
-          const byteVal = isPlaying
-            ? timeDomain[i * tdStep] ?? 128
-            : 128 + Math.sin(waveTimeRef.current + i * 0.2) * 25;
-          const norm = (byteVal - 128) / 128;
-          const y = midY + norm * amplitude;
           const x = i * slice;
-
+          const y = points[i];
           if (i === 0) ctx.moveTo(x, y);
           else {
             const prevX = (i - 1) * slice;
-            const prevByte = isPlaying
-              ? timeDomain[(i - 1) * tdStep] ?? 128
-              : 128 + Math.sin(waveTimeRef.current + (i - 1) * 0.2) * 25;
-            const prevNorm = (prevByte - 128) / 128;
-            const prevY = midY + prevNorm * amplitude;
-            const cpX = (prevX + x) / 2;
-            ctx.quadraticCurveTo(cpX, prevY, x, y);
+            const prevY = points[i - 1];
+            ctx.quadraticCurveTo(prevX, prevY, (prevX + x) / 2, (prevY + y) / 2);
           }
         }
-
         ctx.strokeStyle = activeTheme.accent;
-        ctx.lineWidth = 2.8;
+        ctx.lineWidth = 2.6;
         ctx.lineCap = 'round';
         ctx.shadowColor = activeTheme.glow;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 10;
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Layer 3: Secondary subtle harmonic shimmer wave
+        // Layer 3: Subtle secondary harmonic
         ctx.beginPath();
         for (let i = 0; i < numPoints; i++) {
-          const byteVal = isPlaying
-            ? timeDomain[Math.min(tdLen - 1, i * tdStep + 8)] ?? 128
-            : 128 + Math.cos(waveTimeRef.current * 1.5 + i * 0.3) * 15;
-          const norm = (byteVal - 128) / 128;
-          const y = midY - norm * amplitude * 0.45;
           const x = i * slice;
-
+          const offset = points[numPoints - 1 - i] - midY;
+          const y = midY - offset * 0.45;
           if (i === 0) ctx.moveTo(x, y);
           else {
             const prevX = (i - 1) * slice;
-            const prevByte = isPlaying
-              ? timeDomain[Math.min(tdLen - 1, (i - 1) * tdStep + 8)] ?? 128
-              : 128 + Math.cos(waveTimeRef.current * 1.5 + (i - 1) * 0.3) * 15;
-            const prevNorm = (prevByte - 128) / 128;
-            const prevY = midY - prevNorm * amplitude * 0.45;
-            const cpX = (prevX + x) / 2;
-            ctx.quadraticCurveTo(cpX, prevY, x, y);
+            const prevOffset = points[numPoints - i] - midY;
+            const prevY = midY - prevOffset * 0.45;
+            ctx.quadraticCurveTo(prevX, prevY, (prevX + x) / 2, (prevY + y) / 2);
           }
         }
         ctx.strokeStyle = activeTheme.secondary;
-        ctx.lineWidth = 1.4;
-        ctx.globalAlpha = 0.65;
+        ctx.lineWidth = 1.2;
+        ctx.globalAlpha = 0.55;
         ctx.stroke();
         ctx.globalAlpha = 1.0;
       }
 
       // ─────────────────────────────────────────────────────────────
-      // MODE 3: AUDIO HALO (360° CIRCULAR RADIAL PULSE)
+      // MODE 3: AUDIO HALO (360° SYMMETRIC RADIAL PULSE)
       // ─────────────────────────────────────────────────────────────
       else if (mode === 'radial') {
         const cx = width / 2;
         const cy = h / 2;
         const minDim = Math.min(width, h);
-        const innerRadius = Math.max(26, minDim * 0.22 * (1 + bassEnergy * 0.18));
-        const maxBarHeight = minDim * 0.27;
-        const rays = 64;
+        const innerRadius = Math.max(26, minDim * 0.22 * (1 + bassEnergy * 0.14));
+        const maxBarHeight = minDim * 0.25;
+        const rays = 56;
+        const half = Math.floor(rays / 2);
 
-        rotationRef.current += isPlaying ? 0.003 : 0.001;
+        rotationRef.current += isPlaying ? 0.0025 : 0.001;
 
         // Central Pulsing Glow Core
-        const coreGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, innerRadius * 1.6);
+        const coreGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, innerRadius * 1.5);
         coreGlow.addColorStop(0, activeTheme.glow);
         coreGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = coreGlow;
         ctx.beginPath();
-        ctx.arc(cx, cy, innerRadius * 1.6, 0, Math.PI * 2);
+        ctx.arc(cx, cy, innerRadius * 1.5, 0, Math.PI * 2);
         ctx.fill();
 
-        // 360-degree radiating frequency rays with log sampling
+        // 360-degree radiating frequency rays (Perfect 100% Mirror Symmetry)
         for (let i = 0; i < rays; i++) {
+          const sym = i < half ? i : (rays - 1 - i);
+          let energy = 0;
+          if (isPlaying) {
+            energy = getBarEnergy(spectrum, sym, half);
+          } else {
+            energy = (Math.sin(now * 0.003 + i * 0.3) * 0.5 + 0.5) * 25 + 8;
+          }
+
+          // Strictly bounded: cannot exceed maxBarHeight * 0.82
+          const rayLen = Math.max(3, (energy / 255) * maxBarHeight * 0.82);
+
           const angle = (i / rays) * Math.PI * 2 + rotationRef.current;
-          const symmetricIdx = i < rays / 2 ? i : rays - 1 - (i - rays / 2);
-          const energy = isPlaying
-            ? sampleLogEnergy(spectrum, symmetricIdx, Math.floor(rays / 2), sampleRate)
-            : (Math.sin(now * 0.004 + i * 0.3) * 0.5 + 0.5) * 30 + 10;
-
-          const rayLen = Math.max(4, (energy / 255) * maxBarHeight);
-
           const x1 = cx + Math.cos(angle) * innerRadius;
           const y1 = cy + Math.sin(angle) * innerRadius;
           const x2 = cx + Math.cos(angle) * (innerRadius + rayLen);
@@ -444,11 +417,8 @@ export default function AudioCanvasVisualizer({
         ctx.beginPath();
         ctx.arc(cx, cy, innerRadius, 0, Math.PI * 2);
         ctx.strokeStyle = activeTheme.accent;
-        ctx.lineWidth = 2.2;
-        ctx.shadowColor = activeTheme.glow;
-        ctx.shadowBlur = 8;
+        ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.shadowBlur = 0;
       }
 
       // ─────────────────────────────────────────────────────────────
@@ -456,14 +426,13 @@ export default function AudioCanvasVisualizer({
       // ─────────────────────────────────────────────────────────────
       else if (mode === 'particles') {
         const particles = particlesRef.current;
-        const speedMultiplier = isPlaying ? 1 + bassEnergy * 3.2 : 0.6;
+        const speedMultiplier = isPlaying ? 1 + bassEnergy * 2.2 : 0.6;
 
         for (let i = 0; i < particles.length; i++) {
           const p = particles[i];
           p.x += p.vx * speedMultiplier;
           p.y += p.vy * speedMultiplier;
 
-          // Wrap edges smoothly
           if (p.x < 0) p.x = 1;
           if (p.x > 1) p.x = 0;
           if (p.y < 0) p.y = 1;
@@ -471,30 +440,28 @@ export default function AudioCanvasVisualizer({
 
           const px = p.x * width;
           const py = p.y * h;
-          const size = p.baseSize * (1 + bassEnergy * 1.6);
+          const size = p.baseSize * (1 + bassEnergy * 1.3);
 
-          // Draw Star
           ctx.beginPath();
           ctx.arc(px, py, size, 0, Math.PI * 2);
           ctx.fillStyle = i % 3 === 0 ? activeTheme.accent : activeTheme.secondary;
           ctx.shadowColor = activeTheme.glow;
-          ctx.shadowBlur = 8;
+          ctx.shadowBlur = 6;
           ctx.fill();
           ctx.shadowBlur = 0;
 
-          // Connect neighboring particles with translucent constellation filaments
-          for (let j = i + 1; j < Math.min(particles.length, i + 7); j++) {
+          for (let j = i + 1; j < Math.min(particles.length, i + 6); j++) {
             const p2 = particles[j];
             const p2x = p2.x * width;
             const p2y = p2.y * h;
             const dist = Math.hypot(p2x - px, p2y - py);
-            if (dist < 70) {
+            if (dist < 65) {
               ctx.beginPath();
               ctx.moveTo(px, py);
               ctx.lineTo(p2x, p2y);
               ctx.strokeStyle = activeTheme.accent;
-              ctx.globalAlpha = (1 - dist / 70) * 0.28;
-              ctx.lineWidth = 0.85;
+              ctx.globalAlpha = (1 - dist / 65) * 0.22;
+              ctx.lineWidth = 0.8;
               ctx.stroke();
               ctx.globalAlpha = 1.0;
             }
@@ -503,15 +470,15 @@ export default function AudioCanvasVisualizer({
       }
 
       // ─────────────────────────────────────────────────────────────
-      // MODE 5: VINTAGE ANALOGUE VU METERS (BALLISTIC NEEDLE PHYSICS)
+      // MODE 5: VINTAGE ANALOGUE VU METERS (CALIBRATED DAMPING)
       // ─────────────────────────────────────────────────────────────
       else if (mode === 'vu-meter') {
-        const meterW = Math.min(230, (width - 32) / 2);
-        const meterH = Math.min(115, h * 0.88);
+        const meterW = Math.min(220, (width - 32) / 2);
+        const meterH = Math.min(110, h * 0.88);
         const startY = (h - meterH) / 2;
 
         const drawSingleVUMeter = (x, y, label, channelPos) => {
-          // Outer meter casing
+          // Meter casing
           ctx.fillStyle = '#12141a';
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
           ctx.lineWidth = 1.5;
@@ -529,7 +496,6 @@ export default function AudioCanvasVisualizer({
           ctx.roundRect(x + 4, y + 4, meterW - 8, meterH - 8, 8);
           ctx.fill();
 
-          // Arc scale
           const pivotX = x + meterW / 2;
           const pivotY = y + meterH * 0.88;
           const needleLen = meterH * 0.72;
@@ -540,7 +506,7 @@ export default function AudioCanvasVisualizer({
           ctx.arc(pivotX, pivotY, needleLen, -Math.PI * 0.75, -Math.PI * 0.25);
           ctx.stroke();
 
-          // Scale Ticks (-20dB to +3dB)
+          // Scale Ticks
           for (let deg = -135; deg <= -45; deg += 18) {
             const rad = (deg * Math.PI) / 180;
             const x1 = pivotX + Math.cos(rad) * (needleLen - 6);
@@ -556,7 +522,7 @@ export default function AudioCanvasVisualizer({
             ctx.stroke();
           }
 
-          // Needle deflection with mechanical inertia
+          // Needle angle: strictly -135 deg to -45 deg
           const angle = -Math.PI * 0.75 + (channelPos / 255) * (Math.PI * 0.5);
           const needleX = pivotX + Math.cos(angle) * needleLen;
           const needleY = pivotY + Math.sin(angle) * needleLen;
@@ -570,9 +536,9 @@ export default function AudioCanvasVisualizer({
           ctx.stroke();
 
           // Needle body
-          ctx.strokeStyle = channelPos > 215 ? '#ef4444' : activeTheme.accent;
+          ctx.strokeStyle = channelPos > 210 ? '#ef4444' : activeTheme.accent;
           ctx.shadowColor = activeTheme.glow;
-          ctx.shadowBlur = 6;
+          ctx.shadowBlur = 5;
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.moveTo(pivotX, pivotY);
@@ -586,17 +552,19 @@ export default function AudioCanvasVisualizer({
           ctx.arc(pivotX, pivotY, 4, 0, Math.PI * 2);
           ctx.fill();
 
-          // Channel Label
           ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
           ctx.font = '10px monospace';
           ctx.textAlign = 'center';
           ctx.fillText(label, pivotX, y + meterH * 0.95);
         };
 
-        // Mechanical 2nd-order ballistic needle damping:
-        // Standard VU meter has ~300ms rise time with 1% overshoot
-        const leftTarget = isPlaying ? (freq.bass * 0.7 + freq.average * 0.3) : 15;
-        const rightTarget = isPlaying ? (freq.mid * 0.6 + freq.treble * 0.4) : 15;
+        // Calibrated target (sits comfortably at 40-75% deflection, reaching red only on loud peaks)
+        const bassNorm = (freq.bass || 0) / 255;
+        const midNorm = (freq.mid || 0) / 255;
+        const avgNorm = (freq.average || 0) / 255;
+
+        const leftTarget = isPlaying ? (bassNorm * 0.6 + avgNorm * 0.4) * 195 : 20;
+        const rightTarget = isPlaying ? (midNorm * 0.6 + avgNorm * 0.4) * 195 : 20;
 
         const vs = vuStateRef.current;
         vs.leftVel += (leftTarget - vs.leftPos) * 0.16 - vs.leftVel * 0.22;
@@ -613,31 +581,35 @@ export default function AudioCanvasVisualizer({
       }
 
       // ─────────────────────────────────────────────────────────────
-      // MODE 6: CYBER LED BAR MATRIX
+      // MODE 6: CYBER LED BAR MATRIX (BALANCED ROWS)
       // ─────────────────────────────────────────────────────────────
       else if (mode === 'matrix') {
         const cols = Math.min(32, barCount);
-        const rows = 16;
+        const rows = 14;
         const colWidth = (width / cols) * 0.76;
         const colGap = (width / cols) * 0.24;
         const cellHeight = (h / rows) * 0.72;
         const cellGap = (h / rows) * 0.28;
 
         for (let c = 0; c < cols; c++) {
-          const energy = isPlaying
-            ? sampleLogEnergy(spectrum, c, cols, sampleRate)
-            : (Math.sin(now * 0.003 + c * 0.3) * 0.5 + 0.5) * 35 + 10;
+          let energy = 0;
+          if (isPlaying) {
+            energy = getBarEnergy(spectrum, c, cols);
+          } else {
+            energy = (Math.sin(now * 0.003 + c * 0.3) * 0.5 + 0.5) * 35 + 10;
+          }
 
-          const activeRows = Math.floor((energy / 255) * rows);
+          // Calibrated: typically 4-10 rows lit, red only on top 2
+          const activeRows = Math.min(rows, Math.floor((energy / 255) * (rows - 1)));
           const x = c * (colWidth + colGap);
 
           for (let r = 0; r < rows; r++) {
             const y = h - (r + 1) * (cellHeight + cellGap);
-            const isLit = r < activeRows;
+            const isLit = r <= activeRows;
 
             if (isLit) {
-              if (r >= rows - 2) ctx.fillStyle = '#ef4444'; // Red peak overload
-              else if (r >= rows - 5) ctx.fillStyle = '#f59e0b'; // Amber warn
+              if (r >= rows - 2) ctx.fillStyle = '#ef4444';
+              else if (r >= rows - 4) ctx.fillStyle = '#f59e0b';
               else ctx.fillStyle = activeTheme.accent;
               ctx.shadowColor = activeTheme.glow;
               ctx.shadowBlur = 4;
